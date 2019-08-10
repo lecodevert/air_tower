@@ -1,10 +1,10 @@
 /* $fn = 100; */
 
-cover_height=100;
+cover_height=30;
 
 lozenge_size = 5;
 lozenge_radius = 1;
-lozenge_spacing = 1;
+lozenge_spacing = 2;
 number_of_lozenges = 20;
 stack_number = 3;
 
@@ -22,8 +22,8 @@ total_radius = cylinder_radius();
 echo(radius=total_radius);
 
 module lozenge(size, radius, height) {
-    rotate([0, 90, 0])
-    linear_extrude(height=height) offset(r=radius) rotate([0, 0, 45]) square(size, center=true);
+    translate([height, 0, 0]) rotate([0, 90, 180])
+    linear_extrude(height=height, scale=[0, 0]) offset(r=radius, $fn=10) rotate([0, 0, 45]) square(size, center=true);
 }
 
 
@@ -49,8 +49,9 @@ module lozenge_stack(inner_diameter, outer_diameter) {
 }
 
 difference() {
-    cylinder(d=62, h=cover_height, $fn=100);
+    cylinder(d=64, h=cover_height, $fn=100);
     cylinder(d=58, h=cover_height+1, $fn=100);
-    lozenge_stack(57, 60.3);
-    rotate([0, 0, 360 / number_of_lozenges / 2]) lozenge_stack(60, 63);
+    lozenge_stack(57, 61.3);
+    rotate([0, 0, 360 / number_of_lozenges / 2]) lozenge_stack(61, 64.5);
 }
+
