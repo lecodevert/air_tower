@@ -2,9 +2,11 @@ module latticed_cylinder(inner_diameter, thickness, number_of_holes, holes_spaci
     outer_diameter = inner_diameter + thickness * 2;
     layer_thickness = thickness / layers * 2;
     polygon_side = 2 * (inner_diameter/2 + thickness) * sin( 180 / number_of_holes);
+    echo(polygon_side=polygon_side);
     lozenge_radius = 1;
     lozenge_size = polygon_side - holes_spacing * 2 - lozenge_radius * 2;
-    stack_number = round(height / polygon_side);
+    stack_number = round(height / (polygon_side - 1.5 * holes_spacing));
+    echo(stack_number=stack_number);
 
     module lozenge(size, radius, height) {
         translate([height, 0, 0]) rotate([0, 90, 180])
@@ -40,4 +42,18 @@ module latticed_cylinder(inner_diameter, thickness, number_of_holes, holes_spaci
     }
 }
 
-latticed_cylinder(inner_diameter = 63, thickness = 3, number_of_holes = 20, holes_spacing = 1.7, height = 20, layers = 2);
+difference() {
+    latticed_cylinder(inner_diameter = 63, thickness = 3, number_of_holes = 20,
+                      holes_spacing = 1.7, height = 100, layers = 2);
+    translate([-69/2, -39, 100 - 60]) cube([69, 20, 150]);
+}
+
+/* # translate([0, 0, -2]) cylinder(d=69, h=2, $fn=100); */
+
+rotate([0, 180, 0]) rotate_extrude($fn=100) {
+    difference() {
+        translate([32.5,0,0]) circle(2, $fn=50);
+        translate([0,-2,0]) square([70/2, 2]);
+    }
+    square([66/2, 2]);
+}
