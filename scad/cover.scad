@@ -1,4 +1,4 @@
-module latticed_cylinder(inner_diameter, thickness, number_of_holes, holes_spacing, height, layers, clearance = 0.5) {
+module latticed_cylinder(inner_diameter, thickness, number_of_holes, holes_spacing, height, layers, clearance = 0.1) {
     outer_diameter = inner_diameter + thickness * 2;
     layer_thickness = thickness / layers * 2;
     polygon_side = 2 * (inner_diameter/2 + thickness) * sin( 180 / number_of_holes);
@@ -40,4 +40,4 @@ module latticed_cylinder(inner_diameter, thickness, number_of_holes, holes_spaci
     }
 }
 
-latticed_cylinder(inner_diameter = 61, thickness = 3, number_of_holes = 20, holes_spacing = 2, height = 20, layers = 2);
+latticed_cylinder(inner_diameter = 63, thickness = 3, number_of_holes = 20, holes_spacing = 1.7, height = 20, layers = 2);
