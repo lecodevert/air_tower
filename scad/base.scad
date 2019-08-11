@@ -24,12 +24,18 @@ module pi_mount() {
 
 
 difference() {
-    cylinder(h=62, d=outer_diameter);
-    translate([-outer_diameter/2, -19, 2]) cube([outer_diameter, outer_diameter, 150]);
-    translate([-10, -40, 4]) cube([20, 20, 50]);
-    translate([-7, -22, 8]) cube([10, 10, 28]);
+    union() {
+        difference() {
+            cylinder(h=62, d=outer_diameter);
+            translate([-outer_diameter/2, -19, 2]) cube([outer_diameter, outer_diameter, 150]);
+            translate([-10, -40, 4]) cube([20, 20, 50]);
+            translate([-7, -22, 8]) cube([10, 10, 28]);
+        }
+        cylinder(h=4, d=inner_diameter);
+    }
+    for(i = [-1, 1])
+        for(j = [-1, 1])
+             translate([i * 15, j * 15, -1]) cylinder(d=10 + clearance, h=3);
 }
-
-cylinder(h=4, d=inner_diameter);
 
 translate([0, 0, 4]) pi_mount();
