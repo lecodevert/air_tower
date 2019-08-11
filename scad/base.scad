@@ -27,8 +27,7 @@ difference() {
     cylinder(h=62, d=outer_diameter);
     translate([-outer_diameter/2, -19, 2]) cube([outer_diameter, outer_diameter, 150]);
     translate([-10, -40, 4]) cube([20, 20, 50]);
-    translate([-7, -21, 10.9]) cube([10, 10, 12]);
-    translate([-7, -21, 23.5]) cube([10, 10, 12]);
+    translate([-7, -22, 8]) cube([10, 10, 28]);
 }
 
 cylinder(h=4, d=inner_diameter);
