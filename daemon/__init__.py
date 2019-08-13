@@ -10,9 +10,9 @@ from pms5003 import PMS5003
 from enviroplus import gas as GAS
 from numpy import interp
 
-INTERVAL = 5
+INTERVAL = 10
 
-METRICS = {'temperature': {'name': 'Temperature', 'unit': '°C',
+METRICS = {'temperature': {'name': 'Temperature', 'unit': 'C',
                            'class': 'temerature'},
            'pressure': {'name': 'Barometric pressure', 'unit': 'hPa',
                         'class': 'pressure'},
@@ -81,17 +81,11 @@ def get_gas_data():
 
 
 def get_particulate_data():
-    max_retries = 10
-    retries = 0
-    while True:
-        try:
-            return PM_SENSOR.read()
-        except PMS5003.ReadTimeoutError:
-            if retries > max_retries:
-                break
-            retries = retries + 1
-            print("Retrying...")
-            continue
+    PM_SENSOR.enable()
+    time.sleep(5)
+    data = PM_SENSOR.read()
+    PM_SENSOR.disable()
+    return data
 
 
 def get_all_metrics():
@@ -110,13 +104,15 @@ def get_all_metrics():
 
 
 def init_hw():
+    '''Prime the sensors. The initial reading are ignored because they are
+    not quite right yet.'''
     get_gas_data()
     ltr559.get_lux()
     get_particulate_data()
 
 
-init_hw()
 try:
+    init_hw()
     while True:
         data = get_all_metrics()
 
