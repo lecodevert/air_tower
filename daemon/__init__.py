@@ -14,7 +14,7 @@ from pms5003 import PMS5003
 from enviroplus import gas as GAS
 from numpy import interp
 
-INTERVAL = int(os.getenv('INTERVAL', '60'))
+INTERVAL = int(os.getenv('INTERVAL', '300'))
 DEVICE_NAME = os.getenv('DEVICE_NAME', 'AirTower')
 
 MQTT_SERVER = os.getenv('MQTT_SERVER', 'localhost')
