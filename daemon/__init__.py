@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 
 import ltr559
-import RPi.GPIO as GPIO
+import sys
 import time
 
 from bme280 import BME280
 from pms5003 import PMS5003
 # MICS-6814 Sensor
 from enviroplus import gas as GAS
+from numpy import interp
 
+INTERVAL = 5
 
 METRICS = {'temperature': {'name': 'Temperature', 'unit': '°C',
                            'class': 'temerature'},
@@ -51,18 +53,15 @@ def get_light():
 
 
 def get_oxidising(gas_data):
-    # FIXME: convert kOhms to ppm value
-    return gas_data.oxidising / 1000
+    return interp(gas_data.oxidising / 1000, [0.8, 20], [0.05, 10])
 
 
 def get_reducing(gas_data):
-    # FIXME: convert kOhms to ppm value
-    return gas_data.reducing / 1000
+    return interp(gas_data.reducing / 1000, [100, 1500], [1, 1000])
 
 
 def get_nh3(gas_data):
-    # FIXME: convert kOhms to ppm value
-    return gas_data.nh3 / 1000
+    return interp(gas_data.nh3 / 1000, [10, 1500], [1, 300])
 
 
 def get_pm1(pm_data):
@@ -82,40 +81,49 @@ def get_gas_data():
 
 
 def get_particulate_data():
-    try:
-        return PM_SENSOR.read()
-    except PMS5003.ReadTimeoutError:
-        return PMS5003()
+    max_retries = 10
+    retries = 0
+    while True:
+        try:
+            return PM_SENSOR.read()
+        except PMS5003.ReadTimeoutError:
+            if retries > max_retries:
+                break
+            retries = retries + 1
+            print("Retrying...")
+            continue
 
 
 def get_all_metrics():
-    # Start by powering on the Particulate sensor
-    GPIO.output(22, True)
     gas_data = get_gas_data()
-    for i in range(2):
-        pm_data = get_particulate_data()
-        time.sleep(1)
+    pm_data = get_particulate_data()
 
     data = {}
-    for name, _metric in METRICS.items():
+    for name in METRICS.keys():
+        params = []
         if name in ['oxidising', 'reducing', 'nh3']:
-            data[name] = globals()["get_{}".format(name)](gas_data)
+            params = [gas_data]
         elif name in ['pm1', 'pm25', 'pm10']:
-            data[name] = globals()["get_{}".format(name)](pm_data)
-        else:
-            data[name] = globals()["get_{}".format(name)]()
-    # shutdown PM sensor
-    GPIO.output(22, False)
+            params = [pm_data]
+        data[name] = globals()["get_{}".format(name)](*params)
     return data
 
 
 def init_hw():
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setup(22, GPIO.OUT)
+    get_gas_data()
+    ltr559.get_lux()
+    get_particulate_data()
+
 
 init_hw()
-data = get_all_metrics()
+try:
+    while True:
+        data = get_all_metrics()
 
-for name, metric in METRICS.items():
-    metric['value'] = data[name]
-    print("{name}: {value}{unit}".format(**metric))
+        for name, metric in METRICS.items():
+            metric['value'] = data[name]
+            print("{name}: {value}{unit}".format(**metric))
+        print('---------------------------------------------------------')
+        time.sleep(INTERVAL)
+except KeyboardInterrupt:
+    sys.exit(0)
