@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 
-import ltr559
+import json
+import os
 import sys
 import time
+
+import ltr559
+import paho.mqtt.client as mqtt
 
 from bme280 import BME280
 from pms5003 import PMS5003
@@ -10,11 +14,17 @@ from pms5003 import PMS5003
 from enviroplus import gas as GAS
 from numpy import interp
 
-INTERVAL = 10
+INTERVAL = int(os.getenv('INTERVAL', '60'))
+DEVICE_NAME = os.getenv('DEVICE_NAME', 'AirTower')
+
+MQTT_SERVER = os.getenv('MQTT_SERVER', 'localhost')
+MQTT_PORT = int(os.getenv('MQTT_PORT', '1883'))
+MQTT_BASE_TOPIC = os.getenv('MQTT_BASE_TOPIC', 'homeassistant')
+MQTT_KEEPALIVE = int(os.getenv('MQTT_KEEPALIVE', '60'))
 
 METRICS = {'temperature': {'name': 'Temperature', 'unit': 'C',
-                           'class': 'temerature'},
-           'pressure': {'name': 'Barometric pressure', 'unit': 'hPa',
+                           'class': 'temperature'},
+           'pressure': {'name': 'Pressure', 'unit': 'hPa',
                         'class': 'pressure'},
            'humidity': {'name': 'humidity', 'unit': '%',
                         'class': 'humidity'},
@@ -22,10 +32,9 @@ METRICS = {'temperature': {'name': 'Temperature', 'unit': 'C',
            'oxidising': {'name': 'Oxidising gases', 'unit': 'ppm'},
            'reducing': {'name': 'Reducing gases', 'unit': 'ppm'},
            'nh3': {'name': 'Ammonia', 'unit': 'ppm'},
-           'pm1': {'name': '1 micrometers particles', 'unit': 'ug/m3'},
-           'pm25': {'name': '2.5 micrometers particles', 'unit': 'ug/m3'},
-           'pm10': {'name': '10 micrometers particles', 'unit': 'ug/m3'}
-           }
+           'pm1': {'name': 'PM 1', 'unit': 'ug/m3'},
+           'pm25': {'name': 'PM 2.5', 'unit': 'ug/m3'},
+           'pm10': {'name': 'PM 10', 'unit': 'ug/m3'}}
 
 
 # BME280 temperature/pressure/humidity sensor
@@ -82,6 +91,7 @@ def get_gas_data():
 
 def get_particulate_data():
     PM_SENSOR.enable()
+    # Give some time for the sensor to settle down
     time.sleep(5)
     data = PM_SENSOR.read()
     PM_SENSOR.disable()
@@ -112,14 +122,40 @@ def init_hw():
 
 
 try:
+    print("Initialising")
     init_hw()
+    # MQTT Connection
+    print("Connecting to MQTT broker")
+    mqtt_client = mqtt.Client()
+    mqtt_client.connect(MQTT_SERVER,
+                        MQTT_PORT,
+                        MQTT_KEEPALIVE)
+    # Declaring sensors for home assistant auto discovery
+    print("Announcing devices to Home Assistant")
+    base_path = "{}/sensor/{}".format(MQTT_BASE_TOPIC, DEVICE_NAME.lower())
+    state_path = "{}/state".format(base_path)
+    for name, metric in METRICS.items():
+        payload = {'name': "{} {}".format(DEVICE_NAME, metric['name']),
+                   'unit_of_measurement': metric['unit'],
+                   'state_topic': state_path,
+                   'value_template': "{{{{ value_json.{} }}}}".format(name)}
+        if 'class' in metric:
+            payload['device_class'] = metric['class']
+        config_path = "{}/{}_{}/config".format(base_path,
+                                               DEVICE_NAME.lower(),
+                                               name)
+        print(payload)
+        mqtt_client.publish(config_path, json.dumps(payload), 1, True)
+    print("Startup finished")
+    # Main loop
     while True:
+        print(time.ctime())
         data = get_all_metrics()
-
-        for name, metric in METRICS.items():
-            metric['value'] = data[name]
-            print("{name}: {value}{unit}".format(**metric))
-        print('---------------------------------------------------------')
+        payload = {}
+        for name in METRICS.keys():
+            payload[name] = round(data[name], 2)
+        print(payload)
+        mqtt_client.publish(state_path, json.dumps(payload))
         time.sleep(INTERVAL)
 except KeyboardInterrupt:
     sys.exit(0)
