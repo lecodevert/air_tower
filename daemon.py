@@ -26,7 +26,7 @@ METRICS = {'temperature': {'name': 'Temperature', 'unit': 'C',
                            'class': 'temperature'},
            'pressure': {'name': 'Pressure', 'unit': 'hPa',
                         'class': 'pressure'},
-           'humidity': {'name': 'humidity', 'unit': '%',
+           'humidity': {'name': 'Humidity', 'unit': '%',
                         'class': 'humidity'},
            'light': {'name': 'light', 'unit': 'Lux', 'class': 'illuminance'},
            'oxidising': {'name': 'Oxidising gases', 'unit': 'ppm'},
@@ -120,6 +120,17 @@ def init_hw():
     ltr559.get_lux()
     get_particulate_data()
 
+def on_connect(client, userdata, flags, rc):
+    info = {0: "Connected",
+            1: "Connection refused – incorrect protocol version",
+            2: "Connection refused – invalid client identifier",
+            3: "Connection refused – server unavailable",
+            4: "Connection refused – bad username or password",
+            5: "Connection refused – not authorised"}
+    print(info[rc])
+
+def on_disconnect(client, userdata, rc):
+    print("Client Got Disconnected")
 
 try:
     print("Initialising")
@@ -127,6 +138,9 @@ try:
     # MQTT Connection
     print("Connecting to MQTT broker")
     mqtt_client = mqtt.Client()
+    mqtt_client.on_connect = on_connect
+    mqtt_client.on_disconnect = on_disconnect
+    mqtt_client.loop_start()
     mqtt_client.connect(MQTT_SERVER,
                         MQTT_PORT,
                         MQTT_KEEPALIVE)
