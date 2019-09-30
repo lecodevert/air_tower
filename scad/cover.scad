@@ -73,18 +73,35 @@ module cap() {
     }
 }
 
+module mount(size) {
+    rotate_extrude($fn=500)
+        translate([inner_diameter/2 - size, 0, 0])
+            polygon(points= [[size, 0], [0, size], [size, size]]);
+}
+
 module cover() {
+    ring_width = inner_diameter - cover_ring_dia;
     difference() {
-        latticed_cylinder(inner_diameter = inner_diameter,
-                          thickness = (outer_diameter - inner_diameter) / 2,
-                          number_of_holes = cover_holes,
-                          height = cover_height,
-                          layers = cover_layers,
-                          holes_spacing = 1.7,
-                          clearance = clearance);
+        union() {
+            latticed_cylinder(inner_diameter = inner_diameter,
+                              thickness = (outer_diameter - inner_diameter) / 2,
+                              number_of_holes = cover_holes,
+                              height = cover_height,
+                              layers = cover_layers,
+                              holes_spacing = 1.7,
+                              clearance = clearance);
+            translate([0, 0, cover_height - ring_width - 2 - clearance])
+                mount(ring_width);
+        }
         // clearance for base
         translate([-outer_diameter/2, -39, 100 - base_height])
             cube([outer_diameter, 20, 150]);
+        // holes for inserts
+        for(i = [0, 90, 180])
+            rotate([0, 0, i])
+                translate([inner_diameter/2 - 3, 0, cover_height - 2 - ring_width]) {
+                        cylinder(h=10, d=insert_dia + clearance, $fn=20);
+                }
     }
     cap();
 }

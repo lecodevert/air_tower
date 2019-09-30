@@ -34,12 +34,25 @@ module base() {
             }
             // Mounting plate for the Raspberry Pi
             cylinder(h=4, d=inner_diameter);
+            // Mounting peg for the sensor divider
+            translate([-5, -29, base_height + 2])
+                cube([10, 10, 10]);
         }
         // Holes for rubber feets
         for(i = [-1, 1])
             for(j = [-1, 1])
                  translate([i * 15, j * 15, -1])
                     cylinder(d=10 + clearance, h=3);
+        // holes for cover screws
+        for(i = [0, 90, 180])
+            rotate([0, 0, i])
+                translate([inner_diameter/2 -3, 0, 0]) {
+                        cylinder(h=5, d=3 + clearance);
+                        cylinder(h=3, d=5.5 + clearance);
+                }
+        // hole for the insert for the sensor plate
+        translate([0, -25, base_height + 2])
+            cylinder(d=insert_dia, h=11, $fn=20);
     }
     // Mounting pegs for Raspberry Pi
     translate([0, 0, 4]) pi_mount();

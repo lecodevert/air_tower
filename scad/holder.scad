@@ -5,8 +5,11 @@ module holder(inner_diameter) {
     difference() {
         cylinder(d=inner_diameter - clearance * 2, h=2);
         // Clearance for cable ribbon
-        translate([-inner_diameter/2, 25, 0])
+        translate([-70, 25, 0])
             cube([inner_diameter, inner_diameter, 3]);
+        // screw hole
+        translate([0, 25, 0])
+            cylinder(d=3 + clearance, h=11, $fn=20);
     }
     // Barrier to prevent airflow mixing between the inlet and the outlet
     translate([-3, -inner_diameter/2 + clearance, 2])
