@@ -1,5 +1,6 @@
 include <config.scad>;
 
+// Holder used to keep the particulate sensor on top of the tower
 module holder(inner_diameter) {
     $fn = 100;
     difference() {
@@ -7,6 +8,10 @@ module holder(inner_diameter) {
         // Clearance for cable ribbon
         translate([-70, 25, 0])
             cube([inner_diameter, inner_diameter, 3]);
+
+        // clearance for cover insertion
+        translate([26, -25, 0]) cube([100, 100, 10]);
+        translate([-126, -25, 0]) cube([100, 100, 10]);
         // screw hole
         translate([0, 25, 0])
             cylinder(d=3 + clearance, h=11, $fn=20);
@@ -23,7 +28,13 @@ module holder(inner_diameter) {
                         cylinder(d=4, h=11);
             }
         }
+    // sensor side holder
+    for(i = [-1, 1])
+        translate([i * (25 + clearance + 0.5), 0, 4])
+            cube([1, 30, 5], center=true);
+    // sensor back holder
+    translate([0, 18, 4])
+        cube([20, 1, 5], center=true);
 }
 
-// Holder used to keep the particulate sensor on top of the cover
 holder(inner_diameter);
