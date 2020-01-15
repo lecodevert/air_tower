@@ -5,6 +5,7 @@ import json
 import os
 import sys
 import time
+import logging
 
 from numpy import interp
 import ltr559
@@ -20,8 +21,8 @@ try:
 except ImportError:
     from smbus import SMBus
 
-import logging
-
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)s:%(levelname)s - %(message)s')
 
 BUS = SMBus(1)
 
@@ -138,20 +139,24 @@ def on_connect(_client, _userdata, _flags, result_code):
             3: "Connection refused – server unavailable",
             4: "Connection refused – bad username or password",
             5: "Connection refused – not authorised"}
-    print(info[result_code])
+    if result_code == 0:
+        logging.info(info[result_code])
+    else:
+        logging.error(info[result_code])
 
 
 def on_disconnect(_client, _userdata, _rc):
     '''Indicates when connection to mqtt server has been closed.'''
-    print("Client Got Disconnected")
+    logging.info("Client Got Disconnected")
 
 
 try:
-    print("Initialising")
+    logging.info("Initialising")
     EPAPER = e_paper.Epaper()
     EPAPER.display_network_info(bg='init.bmp')
+
     # MQTT Connection
-    print("Connecting to MQTT broker")
+    logging.info("Connecting to MQTT broker")
     MQTT = mqtt.Client()
     MQTT.on_connect = on_connect
     MQTT.on_disconnect = on_disconnect
@@ -159,8 +164,9 @@ try:
     MQTT.connect(MQTT_SERVER,
                  MQTT_PORT,
                  MQTT_KEEPALIVE)
+
     # Declaring sensors for home assistant auto discovery
-    print("Announcing devices to Home Assistant")
+    logging.info("Announcing devices to Home Assistant")
     BASE_PATH = "{}/sensor/{}".format(MQTT_BASE_TOPIC, DEVICE_NAME.lower())
     STATE_PATH = "{}/state".format(BASE_PATH)
     for name, metric_params in METRICS.items():
@@ -173,18 +179,17 @@ try:
         config_path = "{}/{}_{}/config".format(BASE_PATH,
                                                DEVICE_NAME.lower(),
                                                name)
-        print(payload)
+        logging.debug(payload)
         MQTT.publish(config_path, json.dumps(payload), 1, True)
-    print("Startup finished")
+    logging.info("Startup finished")
+
     # Main loop
     while True:
-        print(time.ctime())
         DATA = get_all_metrics()
         PAYLOAD = {name: round(DATA[name], 2) for name in METRICS}
-        print(PAYLOAD)
+        logging.debug(PAYLOAD)
         MQTT.publish(STATE_PATH, json.dumps(PAYLOAD))
         EPAPER.display_all_data(PAYLOAD['temperature'], bg='all_data.bmp')
-        # EPAPER.sleep()
         time.sleep(INTERVAL - 2)
 except KeyboardInterrupt:
     sys.exit(0)
