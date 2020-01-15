@@ -14,12 +14,14 @@ def display(func):
     def wrapper(*args, **kwargs):
         self = args[0]
         self.epd.init()
+        # Background image support
         if 'bg' in kwargs:
             frame = Image.open(os.path.join(PICDIR, kwargs['bg']))
             del kwargs['bg']
             draw = ImageDraw.Draw(frame)
         else:
             frame, draw = self.blank_frame()
+
         kwargs['draw'] = draw
         func(*args, **kwargs)
         self.epd.display(self.epd.getbuffer(frame))
@@ -67,12 +69,12 @@ class Epaper:
         return ip_addr
 
     @display
-    def display_network_info(self, draw):
+    def display_network_info(self, draw=None, bg=None):
         '''Display a screen with network information.'''
-        draw.text((10, 0), socket.gethostname(), font=self.font24, fill=0)
-        draw.text((10, 20), Epaper.get_ip(), font=self.font24, fill=0)
+        draw.text((128, 0), socket.gethostname(), font=self.font24, fill=0)
+        draw.text((128, 20), Epaper.get_ip(), font=self.font24, fill=0)
 
     @display
-    def display_all_data(self, data, draw):
+    def display_all_data(self, data, draw=None, bg=None):
         '''Display a screen with all the data collected from sensors.'''
-        draw.text((20, 10), str(data), font=self.font24, fill=0)
+        draw.text((32, 8), str(data), font=self.font24, fill=0)

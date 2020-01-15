@@ -149,7 +149,7 @@ def on_disconnect(_client, _userdata, _rc):
 try:
     print("Initialising")
     EPAPER = e_paper.Epaper()
-    EPAPER.display_network_info()
+    EPAPER.display_network_info(bg='init.bmp')
     # MQTT Connection
     print("Connecting to MQTT broker")
     MQTT = mqtt.Client()
@@ -184,7 +184,7 @@ try:
         print(PAYLOAD)
         MQTT.publish(STATE_PATH, json.dumps(PAYLOAD))
         EPAPER.display_all_data(PAYLOAD['temperature'], bg='all_data.bmp')
-        EPAPER.sleep()
+        # EPAPER.sleep()
         time.sleep(INTERVAL - 2)
 except KeyboardInterrupt:
     sys.exit(0)
