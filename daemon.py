@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
+'''Main AirTower file'''
 
 import json
 import os
 import sys
 import time
 
-from enviroplus import gas as GAS
-from modules.display import e_paper
 from numpy import interp
+from enviroplus import gas as GAS
 import ltr559
 import paho.mqtt.client as mqtt
-
 from bme280 import BME280
+from modules.display import e_paper
+
 from pms5003 import PMS5003
-# MICS-6814 Sensor
 
 INTERVAL = int(os.getenv('INTERVAL', '300'))
 DEVICE_NAME = os.getenv('DEVICE_NAME', 'AirTower')
@@ -39,127 +39,142 @@ METRICS = {'temperature': {'name': 'Temperature', 'unit': 'C',
 
 
 def get_temperature(tph_sensor):
+    '''Get temperature from sensor.'''
     return tph_sensor.get_temperature()
 
 
 def get_humidity(tph_sensor):
+    '''Get ambient humidity from sensor.'''
     return tph_sensor.get_humidity()
 
 
 def get_pressure(tph_sensor):
+    '''Get atmospheric pressure from sensor.'''
     return tph_sensor.get_pressure()
 
 
 def get_light():
+    '''Get light level from sensor.'''
     return ltr559.get_lux()
 
 
 def get_oxidising(gas_data):
+    '''Get oxidising gas concentration from sensor data.'''
     return interp(gas_data.oxidising / 1000, [0.8, 20], [0.05, 10])
 
 
 def get_reducing(gas_data):
+    '''Get reducing gas concentration from sensor data.'''
     return interp(gas_data.reducing / 1000, [100, 1500], [1, 1000])
 
 
 def get_nh3(gas_data):
+    '''Get ammonia gas concentration from sensor data.'''
     return interp(gas_data.nh3 / 1000, [10, 1500], [1, 300])
 
 
 def get_pm1(pm_data):
+    '''Get 1 micron particulate level from sensor data.'''
     return pm_data.pm_ug_per_m3(1.0)
 
 
 def get_pm25(pm_data):
+    '''Get 2.5 microns particulate level from sensor data.'''
     return pm_data.pm_ug_per_m3(2.5)
 
 
 def get_pm10(pm_data):
+    '''Get 10 microns particulate level from sensor data.'''
     return pm_data.pm_ug_per_m3(10)
 
 
 def get_gas_data():
+    '''Get aggregate gas data from sensor.'''
     return GAS.read_all()
 
 
 def get_particulate_data(pm_sensor):
+    '''Get aggregate particulate data from sensor.'''
     pm_sensor.enable()
     # Give some time for the sensor to settle down
     time.sleep(5)
-    data = pm_sensor.read()
+    pm_data = pm_sensor.read()
     pm_sensor.disable()
-    return data
+    return pm_data
 
 
 def get_all_metrics():
+    '''Get all data from sensors.'''
     gas_data = get_gas_data()
     pm_data = get_particulate_data(PMS5003())
     tph_sensor = BME280()
 
-    data = {}
-    for name in METRICS.keys():
+    all_data = {}
+    for metric in METRICS:
         params = []
-        if name in ['oxidising', 'reducing', 'nh3']:
+        if metric in ['oxidising', 'reducing', 'nh3']:
             params = [gas_data]
-        elif name in ['pm1', 'pm25', 'pm10']:
+        elif metric in ['pm1', 'pm25', 'pm10']:
             params = [pm_data]
-        elif name in ['temperature', 'pressure', 'humidity']:
+        elif metric in ['temperature', 'pressure', 'humidity']:
             params = [tph_sensor]
-        data[name] = globals()["get_{}".format(name)](*params)
-    return data
+        all_data[metric] = globals()["get_{}".format(metric)](*params)
+    return all_data
 
-def on_connect(client, userdata, flags, rc):
+
+def on_connect(_client, _userdata, _flags, result_code):
+    '''Used for debugging mqtt connection errors.'''
     info = {0: "Connected",
             1: "Connection refused – incorrect protocol version",
             2: "Connection refused – invalid client identifier",
             3: "Connection refused – server unavailable",
             4: "Connection refused – bad username or password",
             5: "Connection refused – not authorised"}
-    print(info[rc])
+    print(info[result_code])
 
-def on_disconnect(client, userdata, rc):
+
+def on_disconnect(_client, _userdata, _rc):
+    '''Indicates when connection to mqtt server has been closed.'''
     print("Client Got Disconnected")
+
 
 try:
     print("Initialising")
-    epaper = e_paper.Epaper()
-    epaper.display_network_info()
-    # init_hw()
+    EPAPER = e_paper.Epaper()
+    EPAPER.display_network_info()
     # MQTT Connection
-    # print("Connecting to MQTT broker")
-    # mqtt_client = mqtt.Client()
-    # mqtt_client.on_connect = on_connect
-    # mqtt_client.on_disconnect = on_disconnect
-    # mqtt_client.loop_start()
-    # mqtt_client.connect(MQTT_SERVER,
-    #                     MQTT_PORT,
-    #                     MQTT_KEEPALIVE)
-    # # Declaring sensors for home assistant auto discovery
-    # print("Announcing devices to Home Assistant")
-    # base_path = "{}/sensor/{}".format(MQTT_BASE_TOPIC, DEVICE_NAME.lower())
-    # state_path = "{}/state".format(base_path)
-    # for name, metric in METRICS.items():
-    #     payload = {'name': "{} {}".format(DEVICE_NAME, metric['name']),
-    #                'unit_of_measurement': metric['unit'],
-    #                'state_topic': state_path,
-    #                'value_template': "{{{{ value_json.{} }}}}".format(name)}
-    #     if 'class' in metric:
-    #         payload['device_class'] = metric['class']
-    #     config_path = "{}/{}_{}/config".format(base_path,
-    #                                            DEVICE_NAME.lower(),
-    #                                            name)
-    #     print(payload)
-    #     mqtt_client.publish(config_path, json.dumps(payload), 1, True)
+    print("Connecting to MQTT broker")
+    MQTT = mqtt.Client()
+    MQTT.on_connect = on_connect
+    MQTT.on_disconnect = on_disconnect
+    MQTT.loop_start()
+    MQTT.connect(MQTT_SERVER,
+                 MQTT_PORT,
+                 MQTT_KEEPALIVE)
+    # Declaring sensors for home assistant auto discovery
+    print("Announcing devices to Home Assistant")
+    BASE_PATH = "{}/sensor/{}".format(MQTT_BASE_TOPIC, DEVICE_NAME.lower())
+    STATE_PATH = "{}/state".format(BASE_PATH)
+    for name, metric_params in METRICS.items():
+        payload = {'name': "{} {}".format(DEVICE_NAME, metric_params['name']),
+                   'unit_of_measurement': metric_params['unit'],
+                   'state_topic': STATE_PATH,
+                   'value_template': "{{{{ value_json.{} }}}}".format(name)}
+        if 'class' in metric_params:
+            payload['device_class'] = metric_params['class']
+        config_path = "{}/{}_{}/config".format(BASE_PATH,
+                                               DEVICE_NAME.lower(),
+                                               name)
+        print(payload)
+        MQTT.publish(config_path, json.dumps(payload), 1, True)
     print("Startup finished")
     # Main loop
     while True:
         print(time.ctime())
-        data = get_all_metrics()
-        payload = {}
-        for name in METRICS.keys():
-            payload[name] = round(data[name], 2)
-        print(payload)
-        # mqtt_client.publish(state_path, json.dumps(payload))
+        DATA = get_all_metrics()
+        PAYLOAD = {name: round(DATA[name], 2) for name in METRICS}
+        print(PAYLOAD)
+        MQTT.publish(STATE_PATH, json.dumps(PAYLOAD))
         time.sleep(INTERVAL)
 except KeyboardInterrupt:
     sys.exit(0)

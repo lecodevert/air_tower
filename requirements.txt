@@ -5,7 +5,6 @@ ltr559==0.0.4
 numpy==1.18.1
 paho-mqtt==1.5.0
 pimoroni-bme280==0.0.2
-pkg-resources==0.0.0
 -e git+https://github.com/reefab/pms5003-python@979931e0e816f5730aa1e4080db0dcce411ef589#egg=pms5003
 pyserial==3.4
 RPi.GPIO==0.7.0

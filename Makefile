@@ -23,3 +23,7 @@ clean:
 
 init:
 	pip3 install -r requirements.txt
+
+lint:
+	pylint daemon.py modules/display/e_paper.py
+	flake8 daemon.py modules/display/e_paper.py
