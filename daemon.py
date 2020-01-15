@@ -7,11 +7,11 @@ import sys
 import time
 
 from numpy import interp
-from enviroplus import gas as GAS
 import ltr559
 import paho.mqtt.client as mqtt
 from bme280 import BME280
 from modules.display import e_paper
+from modules import gas as GAS
 
 from pms5003 import PMS5003
 
@@ -88,11 +88,6 @@ def get_pm10(pm_data):
     return pm_data.pm_ug_per_m3(10)
 
 
-def get_gas_data():
-    '''Get aggregate gas data from sensor.'''
-    return GAS.read_all()
-
-
 def get_particulate_data(pm_sensor):
     '''Get aggregate particulate data from sensor.'''
     pm_sensor.enable()
@@ -105,7 +100,7 @@ def get_particulate_data(pm_sensor):
 
 def get_all_metrics():
     '''Get all data from sensors.'''
-    gas_data = get_gas_data()
+    gas_data = GAS.read_all()
     pm_data = get_particulate_data(PMS5003())
     tph_sensor = BME280()
 
@@ -119,6 +114,8 @@ def get_all_metrics():
         elif metric in ['temperature', 'pressure', 'humidity']:
             params = [tph_sensor]
         all_data[metric] = globals()["get_{}".format(metric)](*params)
+
+    del gas_data
     return all_data
 
 
@@ -175,6 +172,8 @@ try:
         PAYLOAD = {name: round(DATA[name], 2) for name in METRICS}
         print(PAYLOAD)
         MQTT.publish(STATE_PATH, json.dumps(PAYLOAD))
-        time.sleep(INTERVAL)
+        EPAPER.display_all_data(PAYLOAD['temperature'], bg='all_data.bmp')
+        EPAPER.sleep()
+        time.sleep(INTERVAL - 2)
 except KeyboardInterrupt:
     sys.exit(0)
