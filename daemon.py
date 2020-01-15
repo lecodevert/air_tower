@@ -5,14 +5,15 @@ import os
 import sys
 import time
 
+from enviroplus import gas as GAS
+from modules.display import e_paper
+from numpy import interp
 import ltr559
 import paho.mqtt.client as mqtt
 
 from bme280 import BME280
 from pms5003 import PMS5003
 # MICS-6814 Sensor
-from enviroplus import gas as GAS
-from numpy import interp
 
 INTERVAL = int(os.getenv('INTERVAL', '300'))
 DEVICE_NAME = os.getenv('DEVICE_NAME', 'AirTower')
@@ -37,24 +38,16 @@ METRICS = {'temperature': {'name': 'Temperature', 'unit': 'C',
            'pm10': {'name': 'PM 10', 'unit': 'ug/m3'}}
 
 
-# BME280 temperature/pressure/humidity sensor
-TPH_SENSOR = BME280()
-
-# PMS5003 particulate sensor
-PM_SENSOR = PMS5003()
-
-PMS5003_ENABLE_PIN = 22
-
-def get_temperature():
-    return TPH_SENSOR.get_temperature()
+def get_temperature(tph_sensor):
+    return tph_sensor.get_temperature()
 
 
-def get_humidity():
-    return TPH_SENSOR.get_humidity()
+def get_humidity(tph_sensor):
+    return tph_sensor.get_humidity()
 
 
-def get_pressure():
-    return TPH_SENSOR.get_pressure()
+def get_pressure(tph_sensor):
+    return tph_sensor.get_pressure()
 
 
 def get_light():
@@ -89,18 +82,19 @@ def get_gas_data():
     return GAS.read_all()
 
 
-def get_particulate_data():
-    PM_SENSOR.enable()
+def get_particulate_data(pm_sensor):
+    pm_sensor.enable()
     # Give some time for the sensor to settle down
     time.sleep(5)
-    data = PM_SENSOR.read()
-    PM_SENSOR.disable()
+    data = pm_sensor.read()
+    pm_sensor.disable()
     return data
 
 
 def get_all_metrics():
     gas_data = get_gas_data()
-    pm_data = get_particulate_data()
+    pm_data = get_particulate_data(PMS5003())
+    tph_sensor = BME280()
 
     data = {}
     for name in METRICS.keys():
@@ -109,16 +103,10 @@ def get_all_metrics():
             params = [gas_data]
         elif name in ['pm1', 'pm25', 'pm10']:
             params = [pm_data]
+        elif name in ['temperature', 'pressure', 'humidity']:
+            params = [tph_sensor]
         data[name] = globals()["get_{}".format(name)](*params)
     return data
-
-
-def init_hw():
-    '''Prime the sensors. The initial reading are ignored because they are
-    not quite right yet.'''
-    get_gas_data()
-    ltr559.get_lux()
-    get_particulate_data()
 
 def on_connect(client, userdata, flags, rc):
     info = {0: "Connected",
@@ -134,32 +122,34 @@ def on_disconnect(client, userdata, rc):
 
 try:
     print("Initialising")
-    init_hw()
+    epaper = e_paper.Epaper()
+    epaper.display_network_info()
+    # init_hw()
     # MQTT Connection
-    print("Connecting to MQTT broker")
-    mqtt_client = mqtt.Client()
-    mqtt_client.on_connect = on_connect
-    mqtt_client.on_disconnect = on_disconnect
-    mqtt_client.loop_start()
-    mqtt_client.connect(MQTT_SERVER,
-                        MQTT_PORT,
-                        MQTT_KEEPALIVE)
-    # Declaring sensors for home assistant auto discovery
-    print("Announcing devices to Home Assistant")
-    base_path = "{}/sensor/{}".format(MQTT_BASE_TOPIC, DEVICE_NAME.lower())
-    state_path = "{}/state".format(base_path)
-    for name, metric in METRICS.items():
-        payload = {'name': "{} {}".format(DEVICE_NAME, metric['name']),
-                   'unit_of_measurement': metric['unit'],
-                   'state_topic': state_path,
-                   'value_template': "{{{{ value_json.{} }}}}".format(name)}
-        if 'class' in metric:
-            payload['device_class'] = metric['class']
-        config_path = "{}/{}_{}/config".format(base_path,
-                                               DEVICE_NAME.lower(),
-                                               name)
-        print(payload)
-        mqtt_client.publish(config_path, json.dumps(payload), 1, True)
+    # print("Connecting to MQTT broker")
+    # mqtt_client = mqtt.Client()
+    # mqtt_client.on_connect = on_connect
+    # mqtt_client.on_disconnect = on_disconnect
+    # mqtt_client.loop_start()
+    # mqtt_client.connect(MQTT_SERVER,
+    #                     MQTT_PORT,
+    #                     MQTT_KEEPALIVE)
+    # # Declaring sensors for home assistant auto discovery
+    # print("Announcing devices to Home Assistant")
+    # base_path = "{}/sensor/{}".format(MQTT_BASE_TOPIC, DEVICE_NAME.lower())
+    # state_path = "{}/state".format(base_path)
+    # for name, metric in METRICS.items():
+    #     payload = {'name': "{} {}".format(DEVICE_NAME, metric['name']),
+    #                'unit_of_measurement': metric['unit'],
+    #                'state_topic': state_path,
+    #                'value_template': "{{{{ value_json.{} }}}}".format(name)}
+    #     if 'class' in metric:
+    #         payload['device_class'] = metric['class']
+    #     config_path = "{}/{}_{}/config".format(base_path,
+    #                                            DEVICE_NAME.lower(),
+    #                                            name)
+    #     print(payload)
+    #     mqtt_client.publish(config_path, json.dumps(payload), 1, True)
     print("Startup finished")
     # Main loop
     while True:
@@ -169,7 +159,7 @@ try:
         for name in METRICS.keys():
             payload[name] = round(data[name], 2)
         print(payload)
-        mqtt_client.publish(state_path, json.dumps(payload))
+        # mqtt_client.publish(state_path, json.dumps(payload))
         time.sleep(INTERVAL)
 except KeyboardInterrupt:
     sys.exit(0)

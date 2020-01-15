@@ -20,3 +20,6 @@ $(output_dir)cover.stl: scad/cover.scad
 
 clean:
 	rm $(output_dir)*.stl
+
+init:
+	pip3 install -r requirements.txt
