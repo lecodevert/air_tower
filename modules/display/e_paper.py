@@ -5,7 +5,7 @@ import time
 from PIL import Image, ImageDraw, ImageFont
 from modules.waveshare_epd import epd2in9d
 
-PICDIR = 'pic'
+PICDIR = 'img'
 FONTDIR = 'fonts'
 
 
@@ -13,11 +13,17 @@ def display(func):
     '''Decorator for all display screens.'''
     def wrapper(*args, **kwargs):
         self = args[0]
-        frame, draw = self.blank_frame()
+        self.epd.init()
+        if 'bg' in kwargs:
+            frame = Image.open(os.path.join(PICDIR, kwargs['bg']))
+            del kwargs['bg']
+            draw = ImageDraw.Draw(frame)
+        else:
+            frame, draw = self.blank_frame()
         kwargs['draw'] = draw
         func(*args, **kwargs)
         self.epd.display(self.epd.getbuffer(frame))
-        self.sleep()
+        time.sleep(2)
     return wrapper
 
 
@@ -44,7 +50,6 @@ class Epaper:
 
     def sleep(self):
         '''Put the display into sleep mode, with no power usage.'''
-        time.sleep(2)
         self.epd.sleep()
 
     @staticmethod
@@ -70,4 +75,4 @@ class Epaper:
     @display
     def display_all_data(self, data, draw):
         '''Display a screen with all the data collected from sensors.'''
-        draw.text((10, 0), data, font=self.font24, fill=0)
+        draw.text((20, 10), str(data), font=self.font24, fill=0)
