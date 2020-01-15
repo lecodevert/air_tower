@@ -15,6 +15,16 @@ from modules import gas as GAS
 
 from pms5003 import PMS5003
 
+try:
+    from smbus2 import SMBus
+except ImportError:
+    from smbus import SMBus
+
+import logging
+
+
+BUS = SMBus(1)
+
 INTERVAL = int(os.getenv('INTERVAL', '300'))
 DEVICE_NAME = os.getenv('DEVICE_NAME', 'AirTower')
 
@@ -102,7 +112,8 @@ def get_all_metrics():
     '''Get all data from sensors.'''
     gas_data = GAS.read_all()
     pm_data = get_particulate_data(PMS5003())
-    tph_sensor = BME280()
+    tph_sensor = BME280(i2c_dev=BUS)
+    tph_sensor.setup(mode="forced")
 
     all_data = {}
     for metric in METRICS:
