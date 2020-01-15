@@ -9,6 +9,18 @@ PICDIR = 'pic'
 FONTDIR = 'fonts'
 
 
+def display(func):
+    '''Decorator for all display screens.'''
+    def wrapper(*args, **kwargs):
+        self = args[0]
+        frame, draw = self.blank_frame()
+        kwargs['draw'] = draw
+        func(*args, **kwargs)
+        self.epd.display(self.epd.getbuffer(frame))
+        self.sleep()
+    return wrapper
+
+
 class Epaper:
     '''Class used for using the e-paper display.'''
 
@@ -49,20 +61,13 @@ class Epaper:
             sock.close()
         return ip_addr
 
-    def display_network_info(self):
+    @display
+    def display_network_info(self, draw):
         '''Display a screen with network information.'''
-        frame, draw = self.blank_frame()
-
         draw.text((10, 0), socket.gethostname(), font=self.font24, fill=0)
         draw.text((10, 20), Epaper.get_ip(), font=self.font24, fill=0)
-        self.epd.display(self.epd.getbuffer(frame))
-        self.sleep()
 
-    def display_all_data(self, _data):
+    @display
+    def display_all_data(self, data, draw):
         '''Display a screen with all the data collected from sensors.'''
-        frame, _draw = self.blank_frame()
-
-        # draw.text((10, 0), hostname, font=self.font24, fill=0)
-        # draw.text((10, 20), ip, font=self.font24, fill=0)
-        self.epd.display(self.epd.getbuffer(frame))
-        self.sleep()
+        draw.text((10, 0), data, font=self.font24, fill=0)
