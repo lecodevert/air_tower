@@ -114,7 +114,7 @@ def get_all_metrics():
     gas_data = GAS.read_all()
     pm_data = get_particulate_data(PMS5003())
     tph_sensor = BME280(i2c_dev=BUS)
-    tph_sensor.setup(mode="forced")
+    tph_sensor.setup(mode='forced')
 
     all_data = {}
     for metric in METRICS:
@@ -125,7 +125,8 @@ def get_all_metrics():
             params = [pm_data]
         elif metric in ['temperature', 'pressure', 'humidity']:
             params = [tph_sensor]
-        all_data[metric] = globals()["get_{}".format(metric)](*params)
+        all_data[metric] = METRICS[metric]
+        all_data[metric]['value'] = globals()["get_{}".format(metric)](*params)
 
     del gas_data
     return all_data
@@ -186,10 +187,10 @@ try:
     # Main loop
     while True:
         DATA = get_all_metrics()
-        PAYLOAD = {name: round(DATA[name], 2) for name in METRICS}
+        PAYLOAD = {name: round(DATA[name]['value'], 2) for name in METRICS}
         logging.debug(PAYLOAD)
         MQTT.publish(STATE_PATH, json.dumps(PAYLOAD))
-        EPAPER.display_all_data(PAYLOAD['temperature'], bg='all_data.bmp')
+        EPAPER.display_all_data(DATA, bg='all_data.bmp')
         time.sleep(INTERVAL - 2)
 except KeyboardInterrupt:
     sys.exit(0)
