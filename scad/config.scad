@@ -1,5 +1,6 @@
 clearance = 0.1;
-base_height = 60; // not including base ring
+
+base_height = 4;
 
 inner_diameter = 63;
 outer_diameter = 69;

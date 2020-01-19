@@ -1,16 +1,15 @@
 include <config.scad>;
 
-module pi_mount() {
+module pi_mount(dia=2.5) {
     for(i = [-1,1]) {
         difference() {
             // Monting pegs
-            for(j=[-7.6, 7.6, -3 + clearance  *2, 3 - clearance * 2])
-                translate([j, i*11.5, 3.5])
+                translate([0, i*11.5, 3.5])
                     cube([3, 6, 7], center=true);
             // Screw holes through mounting pegs
             translate([0, i*11.5, 4.5])
               rotate([0, 90, 0])
-                  cylinder(d=2.5 + clearance, h=25, center=true);
+                  cylinder(d=dia + clearance, h=25, center=true);
         }
     }
 }
@@ -20,23 +19,14 @@ module base() {
     difference() {
         union() {
             difference() {
-                // Main port of the base
-                cylinder(h=base_height + 2, d=outer_diameter);
+                // Main part of the base
+                cylinder(h=base_height/2, d=outer_diameter);
                 // Cut out for the cover
-                translate([-outer_diameter/2, -19, 2])
-                    cube([outer_diameter, outer_diameter, cover_height]);
-                // Hole for wires
-                translate([-10, -40, 4])
-                    cube([20, 20, 50]);
-                // Hole for connectors
-                translate([-7, -22, 8])
-                    cube([10, 10, 28]);
+                translate([0, 0, 2])
+                    cylinder(d=outer_diameter + 1, h=cover_height);
             }
             // Mounting plate for the Raspberry Pi
-            cylinder(h=4, d=inner_diameter);
-            // Mounting peg for the sensor divider
-            translate([-5, -29, base_height + 2])
-                cube([10, 10, 10]);
+            cylinder(h=base_height, d=inner_diameter);
         }
         // Holes for rubber feets
         for(i = [-1, 1])
@@ -44,18 +34,31 @@ module base() {
                  translate([i * 15, j * 15, -1])
                     cylinder(d=10 + clearance, h=3);
         // holes for cover screws
-        for(i = [0, 90, 180])
+        for(i = [0, 120, 240])
             rotate([0, 0, i])
                 translate([inner_diameter/2 -3, 0, 0]) {
                         cylinder(h=5, d=3 + clearance);
                         cylinder(h=3, d=5.5 + clearance);
                 }
-        // hole for the insert for the sensor plate
-        translate([0, -25, base_height + 2])
-            cylinder(d=insert_dia, h=11, $fn=20);
+        // holes for usb connector breakout board
+        translate([-25, 0, 0]) {
+            for(i=[-4, 4])
+                // screws
+                translate([0, i, 0])
+                    cylinder(h=5, d=3 + clearance);
+            for(i=[-5, 5])
+                // clearance for cable connections
+                translate([4, i, 2])
+                    cylinder(h=5, d=2 + clearance);
+        }
     }
-    // Mounting pegs for Raspberry Pi
-    translate([0, 0, 4]) pi_mount();
+    // Mounting pegs for Raspberry Pi + enviroplus hat
+    for(i=[-7.6, 7.6, -3 + clearance  *2, 3 - clearance * 2])
+        translate([i, 0, base_height]) pi_mount();
+    // Monting pegs for e-paper hat
+    translate([0, 18, base_height])
+        rotate([0, 0, 90])
+            pi_mount(dia=3);
 }
 
 base();

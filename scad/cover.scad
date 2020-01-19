@@ -9,7 +9,8 @@ include <config.scad>;
 */
 
 module latticed_cylinder(inner_diameter, thickness, number_of_holes,
-                         holes_spacing, height, layers, clearance = 0.1) {
+                         holes_spacing, height, layers, clearance = 0.1,
+                         plain=false) {
     outer_diameter = inner_diameter + thickness * 2;
     layer_thickness = thickness / layers * 2;
     polygon_side = 2 * (inner_diameter/2 + thickness) *
@@ -53,16 +54,18 @@ module latticed_cylinder(inner_diameter, thickness, number_of_holes,
         cylinder(d=outer_diameter, h=height, $fn=500);
         translate([0, 0, -0.5])
             cylinder(d=inner_diameter, h=height+1, $fn=500);
-        for(i=[1:1:layers]) {
-            inner_dia = inner_diameter + layer_thickness * (i - 1) - clearance;
-            outer_dia = inner_diameter + layer_thickness * i + clearance;
-            rotate([0, 0, 360 / number_of_holes / layers * i])
-                lozenge_stack(inner_dia, outer_dia);
+        if (plain == false) {
+            for(i=[1:1:layers]) {
+                inner_dia = inner_diameter + layer_thickness * (i - 1) - clearance;
+                outer_dia = inner_diameter + layer_thickness * i + clearance;
+                rotate([0, 0, 360 / number_of_holes / layers * i])
+                    lozenge_stack(inner_dia, outer_dia);
+            }
         }
     }
 }
 
-// Rounded edges caps
+// Rounded edges cap
 module cap() {
     rotate([0, 180, 0]) rotate_extrude($fn=100) {
         difference() {
@@ -73,6 +76,7 @@ module cap() {
     }
 }
 
+// Mounting ring for base
 module mount(size) {
     rotate_extrude($fn=500)
         translate([inner_diameter/2 - size, 0, 0])
@@ -89,15 +93,13 @@ module cover() {
                               height = cover_height,
                               layers = cover_layers,
                               holes_spacing = 1.7,
-                              clearance = clearance);
+                              clearance = clearance,
+                              plain=true);
             translate([0, 0, cover_height - ring_width - 2 - clearance])
                 mount(ring_width);
         }
-        // clearance for base
-        translate([-outer_diameter/2, -39, 100 - base_height])
-            cube([outer_diameter, 20, 150]);
         // holes for inserts
-        for(i = [0, 90, 180])
+        for(i = [0, 120, 240])
             rotate([0, 0, i])
                 translate([inner_diameter/2 - 3, 0, cover_height - 2 - ring_width]) {
                         cylinder(h=10, d=insert_dia + clearance, $fn=20);
