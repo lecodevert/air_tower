@@ -95,15 +95,35 @@ module cover() {
                               holes_spacing = 1.7,
                               clearance = clearance,
                               plain=true);
-            translate([0, 0, cover_height - ring_width - 2 - clearance])
-                mount(ring_width);
+            /* translate([0, 0, cover_height - ring_width - 2 - clearance]) */
+            /*     mount(ring_width); */
         }
         // holes for inserts
-        for(i = [0, 120, 240])
+        for(i = [55, 235])
             rotate([0, 0, i])
                 translate([inner_diameter/2 - 3, 0, cover_height - 2 - ring_width]) {
                         cylinder(h=10, d=insert_dia + clearance, $fn=20);
                 }
+        // window
+        translate([0, 0, cover_height - 40]) {
+            rotate_extrude(angle=105, convexity=10) {
+                translate([outer_diameter/2 - 1.5, 0, 0])
+                    difference() {
+                        square([4, 40], center=true);
+                    }
+            }
+        }
+
+    }
+
+    // Built in support for window
+    translate([0, 0, cover_height - 40]) {
+        rotate_extrude(angle=105, convexity=10) {
+            translate([inner_diameter/2, 0, 0])
+                difference() {
+                    square([thin_wall, 40], center=true);
+                }
+        }
     }
     cap();
 }

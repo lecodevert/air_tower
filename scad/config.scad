@@ -11,3 +11,6 @@ cover_ring_dia = 56;
 cover_layers = 2;
 
 insert_dia = 4;
+
+// Thinnest wall you can print. In doubt, use layer height
+thin_wall = 0.3;
