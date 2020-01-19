@@ -34,12 +34,26 @@ module base() {
                  translate([i * 15, j * 15, -1])
                     cylinder(d=10 + clearance, h=3);
         // holes for cover screws
-        for(i = [0, 120, 240])
+        for(i = [55, 235])
             rotate([0, 0, i])
                 translate([inner_diameter/2 -3, 0, 0]) {
                         cylinder(h=5, d=3 + clearance);
                         cylinder(h=3, d=5.5 + clearance);
                 }
+        // holes for display stand screws
+        rotate([0, 0, 39])
+            translate([inner_diameter/2 - 2.5, 0, 0]) {
+                cylinder(h=5, d=3 + clearance);
+                cylinder(h=3, d=5.5 + clearance);
+            }
+        rotate([0, 0, 39 - 150])
+            translate([inner_diameter/2 - 2.5, 0, 0]) {
+                cylinder(h=5, d=3 + clearance);
+                cylinder(h=3, d=5.5 + clearance);
+            }
+        // slot for microsd card
+        translate([-5, -8, 0])
+            cube([5, 15, base_height + 1]);
         // holes for usb connector breakout board
         translate([-25, 0, 0]) {
             for(i=[-4, 4])
@@ -53,7 +67,8 @@ module base() {
         }
     }
     // Mounting pegs for Raspberry Pi + enviroplus hat
-    for(i=[-7.6, 7.6, -3 + clearance  *2, 3 - clearance * 2])
+    /* for(i=[-7.6, 7.6, -3 + clearance  *2, 3 - clearance * 2]) */
+    for(i=[-7.6, -3 + clearance  *2])
         translate([i, 0, base_height]) pi_mount();
     // Monting pegs for e-paper hat
     translate([0, 18, base_height])
