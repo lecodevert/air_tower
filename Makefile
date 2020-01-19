@@ -18,12 +18,15 @@ $(output_dir)holder.stl: scad/holder.scad
 $(output_dir)cover.stl: scad/cover.scad
 	$(oscad) -o $@ $<
 
+$(output_dir)display.stl: scad/display.scad
+	$(oscad) -o $@ $<
+
 clean:
 	rm $(output_dir)*.stl
 
 init:
 	pip3 install -r requirements.txt
 
-lint:
-	pylint daemon.py modules/display/e_paper.py
-	flake8 daemon.py modules/display/e_paper.py
+lint:daemon.py modules/display/e_paper.py
+	pylint $<
+	flake8 $<
