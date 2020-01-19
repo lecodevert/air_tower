@@ -29,37 +29,41 @@ module base() {
             cylinder(h=base_height, d=inner_diameter);
         }
         // Holes for rubber feets
-        for(i = [-1, 1])
-            for(j = [-1, 1])
-                 translate([i * 15, j * 15, -1])
+        a = -30;
+        for(i=[a, a + 120, a + 240])
+            rotate([0, 0, i])
+                translate([25, 0, -1])
                     cylinder(d=10 + clearance, h=3);
         // holes for cover screws
         for(i = [55, 235])
             rotate([0, 0, i])
                 translate([inner_diameter/2 -3, 0, 0]) {
                         cylinder(h=5, d=3 + clearance);
-                        cylinder(h=3, d=5.5 + clearance);
+                        translate([0, 0, -1])
+                            cylinder(h=4, d=5.5 + clearance);
                 }
         // holes for display stand screws
         rotate([0, 0, 39])
             translate([inner_diameter/2 - 2.5, 0, 0]) {
                 cylinder(h=5, d=3 + clearance);
-                cylinder(h=3, d=5.5 + clearance);
+                translate([0, 0, -1])
+                    cylinder(h=4, d=5.5 + clearance);
             }
         rotate([0, 0, 39 - 150])
             translate([inner_diameter/2 - 2.5, 0, 0]) {
                 cylinder(h=5, d=3 + clearance);
-                cylinder(h=3, d=5.5 + clearance);
+                translate([0, 0, -1])
+                    cylinder(h=4, d=5.5 + clearance);
             }
         // slot for microsd card
-        translate([-5, -8, 0])
+        translate([-5, -8, -0.5])
             cube([5, 15, base_height + 1]);
         // holes for usb connector breakout board
         translate([-25, 0, 0]) {
             for(i=[-4, 4])
                 // screws
-                translate([0, i, 0])
-                    cylinder(h=5, d=3 + clearance);
+                translate([0, i, -1])
+                    cylinder(h=6, d=3 + clearance);
             for(i=[-5, 5])
                 // clearance for cable connections
                 translate([4, i, 2])
