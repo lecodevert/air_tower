@@ -35,7 +35,7 @@ module base() {
                 translate([25, 0, -1])
                     cylinder(d=10 + clearance, h=3);
         // holes for cover screws
-        for(i = [55, 235])
+        for(i = screw_angles)
             rotate([0, 0, i])
                 translate([inner_diameter/2 -3, 0, 0]) {
                         cylinder(h=5, d=3 + clearance);
@@ -56,10 +56,10 @@ module base() {
                     cylinder(h=4, d=5.5 + clearance);
             }
         // slot for microsd card
-        translate([-5, -8, -0.5])
-            cube([5, 15, base_height + 1]);
+        translate([0, 0, 2])
+            cube([25, 15, base_height + 1], center=true);
         // holes for usb connector breakout board
-        translate([-25, 0, 0]) {
+        translate([-23, 0, 0]) {
             for(i=[-4, 4])
                 // screws
                 translate([0, i, -1])

@@ -80,7 +80,7 @@ module cap() {
 module mount(size) {
     rotate_extrude(angle=14, $fn=500)
         translate([inner_diameter/2 - size, 0, 0])
-            polygon(points= [[size, 0], [0, size], [size, size]]);
+            polygon(points= [[size, 0], [0, size], [0, size + 2], [size, size + 2], [size, size]]);
 }
 
 module cover() {
@@ -95,24 +95,24 @@ module cover() {
                               holes_spacing = 1.7,
                               clearance = clearance,
                               plain=true);
-        for(i = [-55, -235])
-            rotate([0, 0, i - 7])
-                translate([0, 0, cover_height - ring_width - 2 - clearance])
+        for(i = screw_angles)
+            rotate([0, 0, -i - 7])
+                translate([0, 0, cover_height - ring_width - 4 - clearance])
                     mount(ring_width);
         }
         // holes for inserts
-        for(i = [-55, -235])
-            rotate([0, 0, i])
+        for(i = screw_angles)
+            rotate([0, 0, -i])
                 translate([inner_diameter/2 - 3, 0, cover_height - 2 - ring_width]) {
                         cylinder(h=10, d=insert_dia + clearance, $fn=20);
                 }
         // display window
-        rotate([0, 0, cover_window_angle])
-            translate([0, 0, cover_height - 40]) {
-                rotate_extrude(angle=105, convexity=10) {
+        rotate([0, 0, cover_window_angle_offset])
+            translate([0, 0, cover_height - 30]) {
+                rotate_extrude(angle=cover_window_angle, convexity=10) {
                     translate([outer_diameter/2 - 1.5, 0, 0])
                         difference() {
-                            square([4, 40], center=true);
+                            square([4, cover_window_height], center=true);
                         }
                 }
             }
@@ -128,29 +128,31 @@ module cover() {
 
     difference() {
         union() {
-            translate([0, -21.5, 2])
-                cylinder(d=5, h=15, $fn=20);
+            translate([0, -21.5, 7.5])
+                 cube([5, 5, 15], center=true);
             // Barrier to prevent airflow mixing between the inlet and the outlet
             translate([-2.5, -inner_diameter/2 + clearance, 2])
                 cube([2, 12.5 - clearance, 20 - clearance]);
         }
-        translate([0, -21.5, 2])
+        translate([0, -21.5, 0]) {
             cylinder(d=3 + clearance, h=20, $fn=20);
+              translate([0, 0, 20]) cube([5, 5, 10], center=true);
+        }
     }
     // mount for sensor
-    translate([0, 21.5, 2])
+    translate([0, 21.5, 0])
         difference() {
-            cylinder(d=5, h=15, $fn=20);
-            cylinder(d=3 + clearance, h=16, $fn=20);
+            translate([0, 0, 7.5]) cube([5, 5, 15], center=true);
+            cylinder(d=3 + clearance, h=20, $fn=20);
         }
 
     // Built in support for window
-    rotate([0, 0, cover_window_angle])
-        translate([0, 0, cover_height - 40]) {
-            rotate_extrude(angle=105, convexity=10) {
+    rotate([0, 0, cover_window_angle_offset])
+        translate([0, 0, cover_height - 30]) {
+            rotate_extrude(angle=cover_window_angle, convexity=10) {
                 translate([inner_diameter/2, 0, 0])
                     difference() {
-                        square([thin_wall, 40], center=true);
+                        square([thin_wall, cover_window_height], center=true);
                     }
             }
         }
@@ -162,3 +164,5 @@ cover();
 /* translate([0, 0, cover_height + 2]) */
 /*     rotate([180, 0, 0]) */
 /*         % base(); */
+/* size = inner_diameter - cover_ring_dia; */
+/* polygon(points= [[size, 0], [0, size], [0, size + 2], [size, size + 2], [size, size]]); */
