@@ -1,6 +1,6 @@
 include <config.scad>;
 
-/* This is probably too many polygons for poor old OpenScad to preview with
+/* This is probably too many polygons for poor OpenScad to preview with
    default settings.
 
    If rendering turns off, you'll need to open Preferences -> Advanced
@@ -10,7 +10,7 @@ include <config.scad>;
 
 module latticed_cylinder(inner_diameter, thickness, number_of_holes,
                          holes_spacing, height, layers, clearance = 0.1,
-                         plain=false) {
+                         style="lattice") {
     outer_diameter = inner_diameter + thickness * 2;
     layer_thickness = thickness / layers * 2;
     polygon_side = 2 * (inner_diameter/2 + thickness) *
@@ -54,9 +54,10 @@ module latticed_cylinder(inner_diameter, thickness, number_of_holes,
         cylinder(d=outer_diameter, h=height, $fn=500);
         translate([0, 0, -0.5])
             cylinder(d=inner_diameter, h=height+1, $fn=500);
-        if (plain == false) {
+        if (style == "lattice") {
             for(i=[1:1:layers]) {
-                inner_dia = inner_diameter + layer_thickness * (i - 1) - clearance;
+                inner_dia = inner_diameter + layer_thickness * (i - 1)
+                    - clearance;
                 outer_dia = inner_diameter + layer_thickness * i + clearance;
                 rotate([0, 0, 360 / number_of_holes / layers * i])
                     lozenge_stack(inner_dia, outer_dia);
@@ -80,11 +81,13 @@ module cap() {
 module mount(size) {
     rotate_extrude(angle=14, $fn=500)
         translate([inner_diameter/2 - size, 0, 0])
-            polygon(points= [[size, 0], [0, size], [0, size + 2], [size, size + 2], [size, size]]);
+            polygon(points= [[size, 0], [0, size], [0, size + 2],
+                             [size, size + 2], [size, size]]);
 }
 
 module cover() {
     ring_width = inner_diameter - cover_ring_dia;
+    window_offset = cover_height - cover_window_height - display_height - 2 + 10;
     difference() {
         union() {
             latticed_cylinder(inner_diameter = inner_diameter,
@@ -93,16 +96,18 @@ module cover() {
                               height = cover_height,
                               layers = cover_layers,
                               holes_spacing = 1.7,
+                              style=cover_style,
                               clearance = clearance);
         // screws holes
-        for(i = screw_angles)
+        for(i=screw_angles)
             rotate([0, 0, -i - 7])
                 translate([0, 0, cover_height - ring_width - 4 - clearance])
                     mount(ring_width);
         // window "frame"
-        rotate([0, 0, cover_window_angle_offset - 0.5])
-            translate([0, 0, cover_height - 38]) {
-                rotate_extrude(angle=cover_window_angle + 1, convexity=10, $fn=100) {
+        rotate([0, 0, -cover_window_angle/2 - 1])
+            translate([0, 0, window_offset]) {
+                rotate_extrude(angle=cover_window_angle + 2,
+                               convexity=10, $fn=100) {
                     translate([outer_diameter/2 - 1.5, 0, 0])
                         difference() {
                             square([4, cover_window_height+2], center=true);
@@ -113,12 +118,13 @@ module cover() {
         // holes for inserts
         for(i = screw_angles)
             rotate([0, 0, -i])
-                translate([inner_diameter/2 - 3, 0, cover_height - 2 - ring_width]) {
+                translate([inner_diameter/2 - 3, 0,
+                           cover_height - 2 - ring_width]) {
                         cylinder(h=10, d=insert_dia + clearance, $fn=20);
                 }
         // display window
-        rotate([0, 0, cover_window_angle_offset])
-            translate([0, 0, cover_height - 38]) {
+        rotate([0, 0, -cover_window_angle/2])
+            translate([0, 0, window_offset]) {
                 rotate_extrude(angle=cover_window_angle, convexity=10) {
                     translate([outer_diameter/2 - 1.5, 0, 0])
                         difference() {
@@ -136,43 +142,23 @@ module cover() {
             }
     }
 
-    difference() {
-        union() {
-            translate([0, -21.5, 7.5])
-                 cube([5, 5, 15], center=true);
-            // Barrier to prevent airflow mixing between the inlet and the outlet
-            translate([-2.5, -inner_diameter/2 + clearance, 2])
-                cube([2, 12.5 - clearance, 20 - clearance]);
-        }
-        translate([0, -21.5, 0]) {
-            cylinder(d=3 + clearance, h=20, $fn=20);
-              translate([0, 0, 20]) cube([5, 5, 10], center=true);
-        }
-    }
-    // mount for sensor
-    translate([0, 21.5, 0])
-        difference() {
-            translate([0, 0, 7.5]) cube([5, 5, 15], center=true);
-            cylinder(d=3 + clearance, h=20, $fn=20);
-        }
-
     // Built in support for window
-    rotate([0, 0, cover_window_angle_offset])
-        translate([0, 0, cover_height - 38]) {
+    rotate([0, 0, -cover_window_angle/2])
+        translate([0, 0, window_offset]) {
             rotate_extrude(angle=cover_window_angle, convexity=10) {
                 translate([inner_diameter/2, 0, 0])
-                    difference() {
-                        square([thin_wall, cover_window_height], center=true);
-                    }
+                    square([thin_wall, cover_window_height], center=true);
+                translate([outer_diameter/2, 0, 0])
+                    square([thin_wall, cover_window_height], center=true);
             }
         }
     cap();
 }
 
 cover();
-/* include <base.scad>; */
-/* translate([0, 0, cover_height + 2]) */
-/*     rotate([180, 0, 0]) */
-/*         % base(); */
-/* size = inner_diameter - cover_ring_dia; */
-/* polygon(points= [[size, 0], [0, size], [0, size + 2], [size, size + 2], [size, size]]); */
+use <base.scad>;
+translate([0, 0, cover_height + 2])
+    rotate([180, 0, 0])
+        % base();
+size = inner_diameter - cover_ring_dia;
+polygon(points= [[size, 0], [0, size], [0, size + 2], [size, size + 2], [size, size]]);
