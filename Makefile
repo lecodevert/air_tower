@@ -7,7 +7,7 @@ else
 endif
 output_dir = stl/
 
-all:$(output_dir)base.stl $(output_dir)cover.stl $(output_dir)holder.stl
+all:$(output_dir)base.stl $(output_dir)cover.stl $(output_dir)holder.stl $(output_dir)display.stl
 
 $(output_dir)base.stl: scad/base.scad
 	$(oscad) -o $@ $<
