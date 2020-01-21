@@ -5,6 +5,9 @@ base_height = 4;
 inner_diameter = 63;
 outer_diameter = 69;
 
+// distance between the top of the base and the bottom edge of the display
+display_height = 13.5;
+
 cover_height = 100; // not including cap
 cover_holes = 20;
 cover_ring_dia = 56;

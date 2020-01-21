@@ -93,12 +93,22 @@ module cover() {
                               height = cover_height,
                               layers = cover_layers,
                               holes_spacing = 1.7,
-                              clearance = clearance,
-                              plain=true);
+                              clearance = clearance);
+        // screws holes
         for(i = screw_angles)
             rotate([0, 0, -i - 7])
                 translate([0, 0, cover_height - ring_width - 4 - clearance])
                     mount(ring_width);
+        // window "frame"
+        rotate([0, 0, cover_window_angle_offset - 0.5])
+            translate([0, 0, cover_height - 38]) {
+                rotate_extrude(angle=cover_window_angle + 1, convexity=10, $fn=100) {
+                    translate([outer_diameter/2 - 1.5, 0, 0])
+                        difference() {
+                            square([4, cover_window_height+2], center=true);
+                        }
+                }
+            }
         }
         // holes for inserts
         for(i = screw_angles)
@@ -108,11 +118,11 @@ module cover() {
                 }
         // display window
         rotate([0, 0, cover_window_angle_offset])
-            translate([0, 0, cover_height - 30]) {
+            translate([0, 0, cover_height - 38]) {
                 rotate_extrude(angle=cover_window_angle, convexity=10) {
                     translate([outer_diameter/2 - 1.5, 0, 0])
                         difference() {
-                            square([4, cover_window_height], center=true);
+                            square([5, cover_window_height], center=true);
                         }
                 }
             }
@@ -148,7 +158,7 @@ module cover() {
 
     // Built in support for window
     rotate([0, 0, cover_window_angle_offset])
-        translate([0, 0, cover_height - 30]) {
+        translate([0, 0, cover_height - 38]) {
             rotate_extrude(angle=cover_window_angle, convexity=10) {
                 translate([inner_diameter/2, 0, 0])
                     difference() {
