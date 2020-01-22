@@ -20,7 +20,7 @@ module holder(inner_diameter) {
     difference() {
         cylinder(d=inner_diameter - clearance * 2, h=1);
         // Clearance for cable ribbon
-        translate([-30, -20, 0])
+        translate([-30, 22, 0])
             cube([20, 25, 3], center=true);
         // clearance for cover insertion
         translate([0, 75, 0])
