@@ -34,7 +34,7 @@ module mount(size) {
 
 module cover() {
     ring_width = inner_diameter - cover_ring_dia;
-    window_offset = cover_height - cover_window_height - display_height - 2 + 10;
+    window_offset = cover_height - cover_window_height - display_height + 9;
     difference() {
         union() {
             cover_cylinder(inner_diameter = inner_diameter,
@@ -51,9 +51,9 @@ module cover() {
                 translate([0, 0, cover_height - ring_width - 4 - clearance])
                     mount(ring_width);
         // window "frame"
-        rotate([0, 0, -cover_window_angle/2 - 1])
+        rotate([0, 0, -cover_window_angle/2 - 2])
             translate([0, 0, window_offset]) {
-                rotate_extrude(angle=cover_window_angle + 2,
+                rotate_extrude(angle=cover_window_angle + 4,
                                convexity=10, $fn=100) {
                     translate([outer_diameter/2 - 1.5, 0, 0])
                         difference() {
@@ -105,7 +105,7 @@ module cover() {
 
 cover();
 
-/* use <base.scad>; */
-/* translate([0, 0, cover_height + 2]) */
-/*     rotate([180, 0, 0]) */
-/*         % base(); */
+use <base.scad>;
+translate([0, 0, cover_height + 2])
+    rotate([180, 0, 0])
+        % base();
