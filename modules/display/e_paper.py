@@ -23,7 +23,7 @@ def display(func):
 
         kwargs['draw'] = draw
         func(*args, **kwargs)
-        self.epd.display(self.epd.getbuffer(frame))
+        self.epd.display(self.epd.getbuffer(frame.transpose(Image.ROTATE_180)))
         time.sleep(2)
     return wrapper
 
@@ -77,38 +77,38 @@ class Epaper:
     def display_all_data(self, data, draw=None, bg=None):
         '''Display a screen with all the data collected from sensors.'''
         draw.text((32, 8), "{:.1f}{}".format(data['temperature']['value'],
-                                            data['temperature']['unit']),
+                                             data['temperature']['unit']),
                   font=self.font24, fill=0)
         draw.text((32, 40), "{:.0f}{}".format(data['humidity']['value'],
-                                          data['humidity']['unit']),
+                                              data['humidity']['unit']),
                   font=self.font24, fill=0)
         draw.text((32, 72), "{:.0f}{}".format(data['pressure']['value'],
-                                          data['pressure']['unit']),
+                                              data['pressure']['unit']),
                   font=self.font24, fill=0)
         draw.text((32, 104), "{:.0f}{}".format(data['light']['value'],
-                                           data['light']['unit']),
+                                               data['light']['unit']),
                   font=self.font24, fill=0)
         draw.text((128, 8), "{}: {:.0f}{}".format(data['pm1']['name'],
-                                             data['pm1']['value'],
-                                             data['pm1']['unit']),
+                                                  data['pm1']['value'],
+                                                  data['pm1']['unit']),
                   font=self.font18, fill=0)
         draw.text((128, 24), "{}: {:.0f}{}".format(data['pm25']['name'],
-                                              data['pm25']['value'],
-                                              data['pm25']['unit']),
+                                                   data['pm25']['value'],
+                                                   data['pm25']['unit']),
                   font=self.font18, fill=0)
         draw.text((128, 42), "{}: {:.0f}{}".format(data['pm10']['name'],
-                                              data['pm10']['value'],
-                                              data['pm10']['unit']),
+                                                   data['pm10']['value'],
+                                                   data['pm10']['unit']),
                   font=self.font18, fill=0)
         draw.text((128, 60), "{}: {:.0f}{}".format(data['nh3']['name'],
-                                              data['nh3']['value'],
-                                              data['nh3']['unit']),
+                                                   data['nh3']['value'],
+                                                   data['nh3']['unit']),
                   font=self.font18, fill=0)
         draw.text((128, 78), "{}: {:.0f}{}".format(data['oxidising']['name'],
-                                               data['oxidising']['value'],
-                                               data['oxidising']['unit']),
+                                                   data['oxidising']['value'],
+                                                   data['oxidising']['unit']),
                   font=self.font18, fill=0)
         draw.text((128, 96), "{}: {:.0f}{}".format(data['reducing']['name'],
-                                               data['reducing']['value'],
-                                               data['reducing']['unit']),
+                                                   data['reducing']['value'],
+                                                   data['reducing']['unit']),
                   font=self.font18, fill=0)
