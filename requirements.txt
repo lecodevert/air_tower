@@ -11,4 +11,4 @@ RPi.GPIO==0.7.0
 smbus==1.1.post2
 spidev==3.4
 ST7735==0.0.3
-Pillow=7.0.0
+Pillow==7.0.0
