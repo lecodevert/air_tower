@@ -6,14 +6,15 @@ import os
 import sys
 import time
 import logging
-
-from numpy import interp
 import ltr559
 import paho.mqtt.client as mqtt
+
+from datetime import datetime
+from numpy import interp
 from bme280 import BME280
+from influxdb import InfluxDBClient
 from modules.display import e_paper
 from modules import gas as GAS
-
 from pms5003 import PMS5003
 
 try:
@@ -25,6 +26,7 @@ logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s:%(levelname)s - %(message)s')
 
 BUS = SMBus(1)
+INFLUXDB = InfluxDBClient()
 
 INTERVAL = int(os.getenv('INTERVAL', '300'))
 DEVICE_NAME = os.getenv('DEVICE_NAME', 'AirTower')
@@ -151,10 +153,27 @@ def on_disconnect(_client, _userdata, _rc):
     logging.info("Client Got Disconnected")
 
 
+def generate_influxdb_points(data):
+    '''Generate the data structure for feeding influxdb measurements.'''
+    generated = []
+    time = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%f')
+    for value in data.values():
+        generated.append({"measurement": value['name'],
+                          "time": time,
+                          "fields": {
+                              "value": float(round(value['value'], 2)),
+                              "unit": value['unit']}
+                          })
+    return generated
+
+
 try:
     logging.info("Initialising")
     EPAPER = e_paper.Epaper()
     EPAPER.display_network_info(bg='init.bmp')
+
+    INFLUXDB.create_database('air_quality')
+    INFLUXDB.switch_database('air_quality')
 
     # MQTT Connection
     logging.info("Connecting to MQTT broker")
@@ -191,6 +210,7 @@ try:
         logging.debug(PAYLOAD)
         MQTT.publish(STATE_PATH, json.dumps(PAYLOAD))
         EPAPER.display_all_data(DATA, bg='all_data.bmp')
+        INFLUXDB.write_points(generate_influxdb_points(DATA))
         time.sleep(INTERVAL - 2)
 except KeyboardInterrupt:
     sys.exit(0)
