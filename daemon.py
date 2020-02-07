@@ -1,20 +1,19 @@
 #!/usr/bin/env python3
 '''Main AirTower file'''
 
-import json
 import os
 import sys
 import time
 import logging
-import ltr559
-import paho.mqtt.client as mqtt
-
 from datetime import datetime
+
+import ltr559
 from numpy import interp
 from bme280 import BME280
 from influxdb import InfluxDBClient
 from modules.display import e_paper
 from modules import gas as GAS
+from modules.mqtt import Mqtt
 from pms5003 import PMS5003
 
 try:
@@ -134,32 +133,13 @@ def get_all_metrics():
     return all_data
 
 
-def on_connect(_client, _userdata, _flags, result_code):
-    '''Used for debugging mqtt connection errors.'''
-    info = {0: "Connected",
-            1: "Connection refused – incorrect protocol version",
-            2: "Connection refused – invalid client identifier",
-            3: "Connection refused – server unavailable",
-            4: "Connection refused – bad username or password",
-            5: "Connection refused – not authorised"}
-    if result_code == 0:
-        logging.info(info[result_code])
-    else:
-        logging.error(info[result_code])
-
-
-def on_disconnect(_client, _userdata, _rc):
-    '''Indicates when connection to mqtt server has been closed.'''
-    logging.info("Client Got Disconnected")
-
-
 def generate_influxdb_points(data):
     '''Generate the data structure for feeding influxdb measurements.'''
     generated = []
-    time = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%f')
+    now = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%f')
     for value in data.values():
         generated.append({"measurement": value['name'],
-                          "time": time,
+                          "time": now,
                           "fields": {
                               "value": float(round(value['value'], 2)),
                               "unit": value['unit']}
@@ -170,49 +150,23 @@ def generate_influxdb_points(data):
 try:
     logging.info("Initialising")
     EPAPER = e_paper.Epaper()
-    EPAPER.display_network_info(bg='init.bmp')
-
     EPAPER.display_network_info(background='init.bmp')
     INFLUXDB.create_database('air_quality')
     INFLUXDB.switch_database('air_quality')
-
-    # MQTT Connection
-    logging.info("Connecting to MQTT broker")
-    MQTT = mqtt.Client()
-    MQTT.on_connect = on_connect
-    MQTT.on_disconnect = on_disconnect
-    MQTT.loop_start()
-    MQTT.connect(MQTT_SERVER,
-                 MQTT_PORT,
-                 MQTT_KEEPALIVE)
-
-    # Declaring sensors for home assistant auto discovery
-    logging.info("Announcing devices to Home Assistant")
-    BASE_PATH = "{}/sensor/{}".format(MQTT_BASE_TOPIC, DEVICE_NAME.lower())
-    STATE_PATH = "{}/state".format(BASE_PATH)
-    for name, metric_params in METRICS.items():
-        payload = {'name': "{} {}".format(DEVICE_NAME, metric_params['name']),
-                   'unit_of_measurement': metric_params['unit'],
-                   'state_topic': STATE_PATH,
-                   'value_template': "{{{{ value_json.{} }}}}".format(name)}
-        if 'class' in metric_params:
-            payload['device_class'] = metric_params['class']
-        config_path = "{}/{}_{}/config".format(BASE_PATH,
-                                               DEVICE_NAME.lower(),
-                                               name)
-        logging.debug(payload)
-        MQTT.publish(config_path, json.dumps(payload), 1, True)
+    MQTT = Mqtt(server=MQTT_SERVER,
+                port=MQTT_PORT,
+                base_topic=MQTT_BASE_TOPIC,
+                keepalive=MQTT_KEEPALIVE,
+                device_name=DEVICE_NAME)
+    MQTT.homeassistant_config(METRICS)
     logging.info("Startup finished")
 
     # Main loop
     while True:
         DATA = get_all_metrics()
-        PAYLOAD = {name: round(DATA[name]['value'], 2) for name in METRICS}
-        logging.debug(PAYLOAD)
-        MQTT.publish(STATE_PATH, json.dumps(PAYLOAD))
-        EPAPER.display_all_data(DATA, bg='all_data.bmp')
+        MQTT.publish_metrics(DATA, METRICS)
         EPAPER.display_all_data(DATA, background='all_data.bmp')
         INFLUXDB.write_points(generate_influxdb_points(DATA))
-        time.sleep(INTERVAL - 2)
+        time.sleep(INTERVAL - 7)
 except KeyboardInterrupt:
     sys.exit(0)
