@@ -3,12 +3,12 @@ Description=Air Tower MQTT Daemon
 Documentation=https://github.com/lecodevert/air_tower
 
 [Service]
-Type=notify
+Type=simple
 User=pi
 Group=pi
 WorkingDirectory=/opt/air_tower/
-ExecStart=/opt/air_tower/daemon.py
-StandardOutput=null
+ExecStart=/opt/air_tower/bin/python3 /opt/air_tower/daemon.py
+StandardOutput=journal
 StandardError=journal
 EnvironmentFile=/opt/air_tower/conf.env
 Restart=always
