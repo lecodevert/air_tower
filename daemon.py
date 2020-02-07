@@ -172,6 +172,7 @@ try:
     EPAPER = e_paper.Epaper()
     EPAPER.display_network_info(bg='init.bmp')
 
+    EPAPER.display_network_info(background='init.bmp')
     INFLUXDB.create_database('air_quality')
     INFLUXDB.switch_database('air_quality')
 
@@ -210,6 +211,7 @@ try:
         logging.debug(PAYLOAD)
         MQTT.publish(STATE_PATH, json.dumps(PAYLOAD))
         EPAPER.display_all_data(DATA, bg='all_data.bmp')
+        EPAPER.display_all_data(DATA, background='all_data.bmp')
         INFLUXDB.write_points(generate_influxdb_points(DATA))
         time.sleep(INTERVAL - 2)
 except KeyboardInterrupt:

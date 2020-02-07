@@ -37,8 +37,10 @@ class Epaper:
         self.epd.init()
         self.epd.Clear(0xFF)
 
-        self.font24 = ImageFont.truetype(os.path.join(FONTDIR, 'Font.ttc'), 24)
-        self.font18 = ImageFont.truetype(os.path.join(FONTDIR, 'Font.ttc'), 18)
+        self.font24 = ImageFont.truetype(os.path.join(FONTDIR,
+                                                      'Roboto-Bold.ttf'), 24)
+        self.font18 = ImageFont.truetype(os.path.join(FONTDIR,
+                                                      'Roboto-Regular.ttf'), 18)
 
     def blank_frame(self):
         '''Returns a blank image object and tools to draw on it.'''
@@ -67,14 +69,18 @@ class Epaper:
             sock.close()
         return ip_addr
 
+    # pylint: disable=unused-argument
+    # background argument is actually used in the decorator
     @display
-    def display_network_info(self, draw=None, bg=None):
+    def display_network_info(self, draw=None, background=None):
         '''Display a screen with network information.'''
         draw.text((128, 0), socket.gethostname(), font=self.font24, fill=0)
         draw.text((128, 20), Epaper.get_ip(), font=self.font24, fill=0)
 
+    # pylint: disable=unused-argument
+    # background argument is actually used in the decorator
     @display
-    def display_all_data(self, data, draw=None, bg=None):
+    def display_all_data(self, data, draw=None, background=None):
         '''Display a screen with all the data collected from sensors.'''
         draw.text((32, 8), "{:.1f}{}".format(data['temperature']['value'],
                                              data['temperature']['unit']),
