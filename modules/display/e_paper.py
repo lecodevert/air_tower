@@ -14,9 +14,9 @@ def display(func):
     def wrapper(*args, **kwargs):
         self = args[0]
         # Background image support
-        if 'bg' in kwargs:
-            frame = Image.open(os.path.join(PICDIR, kwargs['bg']))
-            del kwargs['bg']
+        if 'background' in kwargs:
+            frame = Image.open(os.path.join(PICDIR, kwargs['background']))
+            del kwargs['background']
             draw = ImageDraw.Draw(frame)
         else:
             frame, draw = self.blank_frame()
