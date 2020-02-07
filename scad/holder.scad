@@ -33,10 +33,6 @@ module holder(inner_diameter) {
         for(i=[-4, 4])
             translate([-25, i, 0])
                     cylinder(d=3 + clearance, h=11, $fn=20);
-        // slot for microsd card
-        rotate([0, 0, boards_angle])
-            translate([0, 0, 0.5])
-                cube([25, 15, 2], center=true);
     }
 
     rotate([0, 0, boards_angle]) {
@@ -52,6 +48,6 @@ module holder(inner_diameter) {
 
 
 use <base.scad>;
-translate([0, 0, -20 - base_height]) % base();
+translate([0, 0, - pms_height - base_height]) % base();
 
 holder(inner_diameter);
