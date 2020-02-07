@@ -6,7 +6,7 @@ use <display.scad>;
 use <holder.scad>;
 
 color("Turquoise") base();
-color("LightYellow") translate([0, 0, cover_height + 2])
+% translate([0, 0, cover_height + 2])
     rotate([180, 0, 0])
         cover();
 color("Crimson") translate([0, 0, base_height + display_height - 2])
