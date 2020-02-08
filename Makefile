@@ -33,9 +33,9 @@ clean:
 init: .make.python.packages .make.influxdb .make.grafana .make.mosquitto .make.venv requirements.txt
 	pip3 install -r requirements.txt
 
-lint: daemon.py modules/display/e_paper.py modules/mqtt/__init__.py
-	pylint $^
-	flake8 $^
+lint: daemon.py modules/*.py
+	-pylint $^
+	-flake8 $^
 
 .make.venv:
 	python3 -m venv .
