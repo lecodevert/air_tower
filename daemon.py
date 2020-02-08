@@ -5,15 +5,12 @@ import os
 import sys
 import time
 import logging
-from datetime import datetime
 
 import ltr559
 from numpy import interp
 from bme280 import BME280
-from influxdb import InfluxDBClient
-from modules import e_paper
+from modules import e_paper, mqtt, influxdb
 from modules import gas as GAS
-from modules import mqtt
 from pms5003 import PMS5003
 
 try:
@@ -25,7 +22,6 @@ logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s:%(levelname)s - %(message)s')
 
 BUS = SMBus(1)
-INFLUXDB = InfluxDBClient()
 
 INTERVAL = int(os.getenv('INTERVAL', '300'))
 DEVICE_NAME = os.getenv('DEVICE_NAME', 'AirTower')
@@ -133,26 +129,11 @@ def get_all_metrics():
     return all_data
 
 
-def generate_influxdb_points(data):
-    '''Generate the data structure for feeding influxdb measurements.'''
-    generated = []
-    now = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%f')
-    for value in data.values():
-        generated.append({"measurement": value['name'],
-                          "time": now,
-                          "fields": {
-                              "value": float(round(value['value'], 2)),
-                              "unit": value['unit']}
-                          })
-    return generated
-
-
 try:
     logging.info("Initialising")
     EPAPER = e_paper.Epaper()
     EPAPER.display_network_info(background='init.bmp')
-    INFLUXDB.create_database('air_quality')
-    INFLUXDB.switch_database('air_quality')
+    INFLUXDB = influxdb.InfluxDB()
     MQTT = mqtt.Mqtt(server=MQTT_SERVER,
                      port=MQTT_PORT,
                      base_topic=MQTT_BASE_TOPIC,
@@ -166,7 +147,7 @@ try:
         DATA = get_all_metrics()
         MQTT.publish_metrics(DATA, METRICS)
         EPAPER.display_all_data(DATA, background='all_data.bmp')
-        INFLUXDB.write_points(generate_influxdb_points(DATA))
+        INFLUXDB.publish_metrics(DATA)
         time.sleep(INTERVAL - 7)
 except KeyboardInterrupt:
     sys.exit(0)
