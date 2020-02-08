@@ -11,9 +11,9 @@ import ltr559
 from numpy import interp
 from bme280 import BME280
 from influxdb import InfluxDBClient
-from modules.display import e_paper
+from modules import e_paper
 from modules import gas as GAS
-from modules.mqtt import Mqtt
+from modules import mqtt
 from pms5003 import PMS5003
 
 try:
@@ -153,11 +153,11 @@ try:
     EPAPER.display_network_info(background='init.bmp')
     INFLUXDB.create_database('air_quality')
     INFLUXDB.switch_database('air_quality')
-    MQTT = Mqtt(server=MQTT_SERVER,
-                port=MQTT_PORT,
-                base_topic=MQTT_BASE_TOPIC,
-                keepalive=MQTT_KEEPALIVE,
-                device_name=DEVICE_NAME)
+    MQTT = mqtt.Mqtt(server=MQTT_SERVER,
+                     port=MQTT_PORT,
+                     base_topic=MQTT_BASE_TOPIC,
+                     keepalive=MQTT_KEEPALIVE,
+                     device_name=DEVICE_NAME)
     MQTT.homeassistant_config(METRICS)
     logging.info("Startup finished")
 
