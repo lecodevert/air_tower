@@ -1,11 +1,13 @@
-from influxdb import InfluxDBClient
+'''InfluxDB Wrapper.'''
 from datetime import datetime
+from influxdb import InfluxDBClient
+
 
 class InfluxDB:
+    '''InfluxDB Wrapper.'''
 
     def __init__(self):
         '''Init connection and database.'''
-        #TODO: add connection parameters and configurable database name
         self.influxdb = InfluxDBClient()
         self.influxdb.create_database('air_quality')
         self.influxdb.switch_database('air_quality')
@@ -25,4 +27,5 @@ class InfluxDB:
         return generated
 
     def publish_metrics(self, data):
+        '''Send measurement to influxDB.'''
         self.influxdb.write_points(self.generate_influxdb_points(data))

@@ -132,7 +132,6 @@ def get_all_metrics():
 try:
     logging.info("Initialising")
     EPAPER = e_paper.Epaper()
-    EPAPER.display_network_info(background='init.bmp')
     INFLUXDB = influxdb.InfluxDB()
     MQTT = mqtt.Mqtt(server=MQTT_SERVER,
                      port=MQTT_PORT,
@@ -140,6 +139,7 @@ try:
                      keepalive=MQTT_KEEPALIVE,
                      device_name=DEVICE_NAME)
     MQTT.homeassistant_config(METRICS)
+    EPAPER.display_network_info(background='init.bmp')
     logging.info("Startup finished")
 
     # Main loop

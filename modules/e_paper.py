@@ -1,9 +1,9 @@
 '''Epd2in9d module.'''
 import os
-import socket
 import time
 from PIL import Image, ImageDraw, ImageFont
 from modules.waveshare_epd import epd2in9d
+from modules import network
 
 PICDIR = 'img'
 FONTDIR = 'fonts'
@@ -40,7 +40,8 @@ class Epaper:
         self.font24 = ImageFont.truetype(os.path.join(FONTDIR,
                                                       'Roboto-Bold.ttf'), 24)
         self.font18 = ImageFont.truetype(os.path.join(FONTDIR,
-                                                      'Roboto-Regular.ttf'), 18)
+                                                      'Roboto-Regular.ttf'),
+                                         18)
 
     def blank_frame(self):
         '''Returns a blank image object and tools to draw on it.'''
@@ -55,27 +56,15 @@ class Epaper:
         '''Put the display into sleep mode, with no power usage.'''
         self.epd.sleep()
 
-    @staticmethod
-    def get_ip():
-        '''Returns the main ip address of the system.'''
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        try:
-            # doesn't even have to be reachable
-            sock.connect(('10.255.255.255', 1))
-            ip_addr = sock.getsockname()[0]
-        except socket.error:
-            ip_addr = '127.0.0.1'
-        finally:
-            sock.close()
-        return ip_addr
-
     # pylint: disable=unused-argument
     # background argument is actually used in the decorator
     @display
     def display_network_info(self, draw=None, background=None):
         '''Display a screen with network information.'''
-        draw.text((128, 0), socket.gethostname(), font=self.font24, fill=0)
-        draw.text((128, 20), Epaper.get_ip(), font=self.font24, fill=0)
+        draw.text((128, 0), network.Network.get_hostname(), font=self.font24,
+                  fill=0)
+        draw.text((128, 20), network.Network.get_ip(), font=self.font24,
+                  fill=0)
 
     # pylint: disable=unused-argument
     # background argument is actually used in the decorator
