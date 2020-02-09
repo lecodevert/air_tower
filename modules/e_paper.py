@@ -7,6 +7,8 @@ from modules import network
 
 PICDIR = 'img'
 FONTDIR = 'fonts'
+FONT24 = 'Roboto Mono Bold Nerd Font Complete.ttf'
+FONT18 = 'Roboto Mono Nerd Font Complete.ttf'
 
 
 def display(func):
@@ -37,11 +39,8 @@ class Epaper:
         self.epd.init()
         self.epd.Clear(0xFF)
 
-        self.font24 = ImageFont.truetype(os.path.join(FONTDIR,
-                                                      'Roboto-Bold.ttf'), 24)
-        self.font18 = ImageFont.truetype(os.path.join(FONTDIR,
-                                                      'Roboto-Regular.ttf'),
-                                         18)
+        self.font24 = ImageFont.truetype(os.path.join(FONTDIR, FONT24), 24)
+        self.font18 = ImageFont.truetype(os.path.join(FONTDIR, FONT18), 18)
 
     def blank_frame(self):
         '''Returns a blank image object and tools to draw on it.'''

@@ -32,12 +32,13 @@ MQTT_BASE_TOPIC = os.getenv('MQTT_BASE_TOPIC', 'homeassistant')
 MQTT_KEEPALIVE = int(os.getenv('MQTT_KEEPALIVE', '60'))
 
 METRICS = {'temperature': {'name': 'Temperature', 'unit': 'C',
-                           'class': 'temperature'},
+                           'class': 'temperature', 'glyph': ''},
            'pressure': {'name': 'Pressure', 'unit': 'hPa',
-                        'class': 'pressure'},
+                        'class': 'pressure', 'glyph': ''},
            'humidity': {'name': 'Humidity', 'unit': '%',
-                        'class': 'humidity'},
-           'light': {'name': 'light', 'unit': 'Lux', 'class': 'illuminance'},
+                        'class': 'humidity', 'glyph': ''},
+           'light': {'name': 'light', 'unit': 'Lux',
+                     'class': 'illuminance', 'glyph': ''},
            'oxidising': {'name': 'NO2', 'unit': 'ppm'},
            'reducing': {'name': 'CO', 'unit': 'ppm'},
            'nh3': {'name': 'Ammonia', 'unit': 'ppm'},
@@ -139,14 +140,14 @@ try:
                      keepalive=MQTT_KEEPALIVE,
                      device_name=DEVICE_NAME)
     MQTT.homeassistant_config(METRICS)
-    EPAPER.display_network_info(background='init.bmp')
+    EPAPER.display_network_info()
     logging.info("Startup finished")
 
     # Main loop
     while True:
         DATA = get_all_metrics()
         MQTT.publish_metrics(DATA, METRICS)
-        EPAPER.display_all_data(DATA, background='all_data.bmp')
+        EPAPER.display_all_data(DATA)
         INFLUXDB.publish_metrics(DATA)
         time.sleep(INTERVAL - 7)
 except KeyboardInterrupt:
