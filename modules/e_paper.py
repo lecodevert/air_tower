@@ -61,9 +61,14 @@ class Epaper:
     @display
     def display_network_info(self, draw=None, background=None):
         '''Display a screen with network information.'''
-        draw.text((128, 0), network.Network.get_hostname(), font=self.font24,
+        net = network.Network
+        draw.text((2, 2), net.get_hostname(), font=self.font24,
                   fill=0)
-        draw.text((128, 20), network.Network.get_ip(), font=self.font24,
+        draw.text((2, 28), net.get_ip(), font=self.font24,
+                  fill=0)
+        ssid = net.get_ssid()
+        glyph = net.WIFI_GLYPH if ssid else net.WIFI_DISABLED_GLYPH
+        draw.text((2, 54), "{} {}".format(glyph, ssid), font=self.font24,
                   fill=0)
 
     # pylint: disable=unused-argument

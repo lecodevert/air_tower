@@ -1,9 +1,13 @@
 '''Network related methods.'''
 import socket
+import subprocess
 
 
 class Network:
     '''Network related methods.'''
+
+    WIFI_GLYPH = '直'
+    WIFI_DISABLED_GLYPH = '睊'
 
     @staticmethod
     def get_ip():
@@ -23,3 +27,9 @@ class Network:
     def get_hostname():
         '''Returns the hostname.'''
         return socket.gethostname()
+
+    @staticmethod
+    def get_ssid():
+        '''Get the SSID if the raspberry pi is connected to a network.'''
+        return subprocess.run(['iwgetid', '-r'],
+                              capture_output=True).stdout.strip()
