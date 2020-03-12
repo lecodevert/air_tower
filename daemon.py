@@ -27,6 +27,7 @@ INTERVAL = int(os.getenv('INTERVAL', '300'))
 DEVICE_NAME = os.getenv('DEVICE_NAME', 'AirTower')
 
 MQTT_SERVER = os.getenv('MQTT_SERVER', 'localhost')
+MQTT_ENABLED = MQTT_SERVER.lower() != 'disabled'
 MQTT_PORT = int(os.getenv('MQTT_PORT', '1883'))
 MQTT_BASE_TOPIC = os.getenv('MQTT_BASE_TOPIC', 'homeassistant')
 MQTT_KEEPALIVE = int(os.getenv('MQTT_KEEPALIVE', '60'))
@@ -134,19 +135,25 @@ try:
     logging.info("Initialising")
     EPAPER = e_paper.Epaper()
     INFLUXDB = influxdb.InfluxDB()
-    MQTT = mqtt.Mqtt(server=MQTT_SERVER,
-                     port=MQTT_PORT,
-                     base_topic=MQTT_BASE_TOPIC,
-                     keepalive=MQTT_KEEPALIVE,
-                     device_name=DEVICE_NAME)
-    MQTT.homeassistant_config(METRICS)
+    if MQTT_ENABLED:
+        try:
+            MQTT = mqtt.Mqtt(server=MQTT_SERVER,
+                             port=MQTT_PORT,
+                             base_topic=MQTT_BASE_TOPIC,
+                             keepalive=MQTT_KEEPALIVE,
+                             device_name=DEVICE_NAME)
+            MQTT.homeassistant_config(METRICS)
+        except ConnectionRefusedError:
+            logging.error("MQTT server not available, disabling MQTT feature")
+            MQTT_ENABLED = False
     EPAPER.display_network_info()
     logging.info("Startup finished")
 
     # Main loop
     while True:
         DATA = get_all_metrics()
-        MQTT.publish_metrics(DATA, METRICS)
+        if MQTT_ENABLED:
+            MQTT.publish_metrics(DATA, METRICS)
         EPAPER.display_all_data(DATA)
         INFLUXDB.publish_metrics(DATA)
         time.sleep(INTERVAL - 7)
