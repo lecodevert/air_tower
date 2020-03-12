@@ -23,6 +23,12 @@ module base() {
             // Mounting plate for the Raspberry Pi
             cylinder(h=base_height, d=inner_diameter);
         }
+        // logo
+        translate([2.5, 0, -0.1])
+            linear_extrude(height=2.5)
+                rotate([0, 0, -90])
+                    scale([0.08, 0.08, 1])
+                        import("lecodevert.svg", center=true);
         // Holes for rubber feets
         a = 45;
         for(i=[0, 90, 180, 270])
