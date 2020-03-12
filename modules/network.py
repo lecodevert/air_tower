@@ -30,6 +30,7 @@ class Network:
 
     @staticmethod
     def get_ssid():
-        '''Get the SSID if the raspberry pi is connected to a network.'''
-        return subprocess.run(['iwgetid', '-r'],
-                              capture_output=True).stdout.strip()
+        '''Get the SSID if the raspberry pi is connected to a wifi network.'''
+        ssid = subprocess.run(['iwgetid', '-r'],
+                              capture_output=True).stdout
+        return ssid.strip().decode('utf-8')
