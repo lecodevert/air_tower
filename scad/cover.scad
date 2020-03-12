@@ -82,7 +82,7 @@ module cover() {
             }
         // holes for usb connector
         rotate([0, 0, 180])
-            translate([inner_diameter/2, 0, cover_height]) {
+            translate([inner_diameter/2, 0, cover_height + 1]) {
                 translate([0, 0, -3.5])
                     cube([10, 10, 7], center=true);
                 translate([0, 0, -2.5])
