@@ -1,6 +1,6 @@
 '''Epd2in9d module.'''
+from datetime import datetime, timedelta
 import os
-import time
 from PIL import Image, ImageDraw, ImageFont
 from modules.waveshare_epd import epd2in9d
 from modules import network
@@ -15,6 +15,7 @@ def display(func):
     '''Decorator for all display screens.'''
     def wrapper(*args, **kwargs):
         self = args[0]
+        self.clean()
         # Background image support
         if 'background' in kwargs:
             frame = Image.open(os.path.join(PICDIR, kwargs['background']))
@@ -26,7 +27,6 @@ def display(func):
         kwargs['draw'] = draw
         func(*args, **kwargs)
         self.epd.display(self.epd.getbuffer(frame.transpose(Image.ROTATE_180)))
-        time.sleep(2)
     return wrapper
 
 
@@ -38,6 +38,7 @@ class Epaper:
         self.epd = epd2in9d.EPD()
         self.epd.init()
         self.epd.Clear(0xFF)
+        self.last_clean = None
 
         self.font24 = ImageFont.truetype(os.path.join(FONTDIR, FONT24), 24)
         self.font18 = ImageFont.truetype(os.path.join(FONTDIR, FONT18), 18)
@@ -50,6 +51,15 @@ class Epaper:
     def clear(self):
         '''Physically clear the content of the display.'''
         self.epd.Clear(0xFF)
+
+    def clean(self):
+        '''Reset the display by alternating between black and white.'''
+        if (self.last_clean is None or
+           datetime.now() > self.last_clean + timedelta(hours=1)):
+            self.epd.Clear(0xFF)
+            self.epd.Clear(0x00)
+            self.epd.Clear(0xFF)
+            self.last_clean = datetime.now()
 
     def sleep(self):
         '''Put the display into sleep mode, with no power usage.'''
